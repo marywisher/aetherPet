@@ -1,24 +1,19 @@
 {
-  "type": "system_announce",
-  "slots": {
-    "title": { "mode": "fixed", "default": "公告" },
-    "body": {
-      "mode": "template",
-      "variants": {
-        "daily": [
-          "{announcement_title}：{announcement_body}",
-          "服务中心告知：{announcement_body}"
-        ],
-        "poetic": [
-          "服务中心留了一句话：{announcement_body}"
-        ]
-      },
-      "poetic_ratio": 0.10
+  "title": { "mode": "fixed", "default": "公告：{announcement_title}" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "{announcement_body}",
+        "（公告）{announcement_body}"
+      ],
+      "poetic": [
+        "风把这张公告吹到你窗台上：{announcement_body}"
+      ]
     },
-    "sign_off": { "mode": "fixed", "default": "— 服务中心" }
+    "poetic_ratio": 0.05
   },
-  "assets": { "icon": "images/icons/announce.svg" },
-  "highlight": { "memory_refs": false, "anchor_style": "underline" },
+  "sign_off": { "mode": "fixed", "default": "—— 系统" },
   "recall_required": [],
   "recall_min_count": 0
 }

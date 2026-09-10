@@ -1,28 +1,27 @@
 {
-  "type": "outing",
-  "slots": {
-    "title": { "mode": "fixed", "default": "{pet_name} 出门了" },
-    "body": {
-      "mode": "template",
-      "variants": {
-        "daily": [
-          "今天去了 {destination}，走了 {duration_hours} 小时。",
-          "{pet_name} 出去溜达了一圈，回来时鞋底沾了 {destination} 的花草气。",
-          "路过 {destination}，看了看风景就回来了。"
-        ],
-        "poetic": [
-          "{pet_name} 走了一趟 {destination}，风里有 {duration_hours} 小时的光。",
-          "去 {destination} 的时候，天正好。"
-        ]
-      },
-      "poetic_ratio": 0.10
+  "title": { "mode": "fixed", "default": "{pet_name}" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "今天去 {destination} 走了走，回来蹭蹭你的脚踝就睡了",
+        "{destination} 的草有点软，我把爪子按进去按了半小时",
+        "走了快 {duration_hours} 小时，鞋垫上留了一只爪印",
+        "{pet_name} 今天心情不错，去 {destination} 溜达了一圈",
+        "回来的时候脚有点黑，是 {destination} 的土",
+        "路过 {destination} 时看到一群蚂蚁搬家，蹲下来看了十分钟",
+        "去 {destination} 的时候太阳正好，晒得我背都暖了",
+        "回来的路上捡到一片漂亮的叶子，放在门口压着"
+      ],
+      "poetic": [
+        "黄昏落在 {destination} 的岸线，我把影子留给了河水",
+        "脚底沾着 {destination} 的泥土香，那是我今天的诗",
+        "风把 {duration_hours} 个小时吹成薄雾，我把你留在 {destination} 门口"
+      ]
     },
-    "sign_off": { "mode": "template", "variants": ["— {pet_name}", "—— {pet_name}"] }
+    "poetic_ratio": 0.1
   },
-  "assets": {
-    "icon": "images/icons/outing.svg"
-  },
-  "highlight": { "memory_refs": true, "anchor_style": "underline" },
-  "recall_required": ["pet_name", "place"],
-  "recall_min_count": 0
+  "sign_off": { "mode": "fixed", "default": "—— {pet_name}" },
+  "recall_required": ["place", "time_anchor"],
+  "recall_min_count": 1
 }

@@ -1,62 +1,74 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { useTheme } from "@/ui/theme-provider";
-
 /**
  * 文件名称：page.tsx
- * 功能描述：首页（登录后跳转）
- * 所属模块：app/
- * 验收对齐：docs/requirements.md §6 #1 注册登录 + #8 素材包
+ * 功能描述：首页（无 pet → 跳创建；有 pet → 显示时间线 + 开发工具按钮）
+ * 所属模块：app
+ * 验收对齐：docs/dev-stage-plan.md §3 阶段 2 演示步骤 1/2/3
  */
 
-interface Pet {
-  id: string;
-  name: string;
-  state: "at_home" | "out_walking" | "on_trip";
-  stateSince: number;
-  createdAt: number;
-  activePackName: string;
-  hubId: string;
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ThemeProvider, useTheme } from "@/ui/theme-provider";
+import { EventCard } from "@/ui/event-card";
+import type { EventTypeValue, PetState } from "@/domain/types";
+import type { RenderedText } from "@/domain/events/render";
+
+interface TimelineItem {
+  event: {
+    id: string;
+    type: EventTypeValue;
+    ts: number;
+    fsmState: PetState;
+  };
+  rendered: RenderedText;
 }
 
-const STATE_LABELS: Record<Pet["state"], string> = {
-  at_home: "在家",
-  out_walking: "出门散步",
-  on_trip: "旅行中",
-};
+interface TimelineResponse {
+  ok: boolean;
+  pet: { id: string; name: string; state: PetState } | null;
+  events: TimelineItem[];
+}
 
-export default function HomePage() {
+const FORCE_TYPES: EventTypeValue[] = [
+  "outing",
+  "watching_water",
+  "counting_leaves",
+  "self_talk",
+  "brought_item",
+  "spontaneous_letter",
+];
+
+function HomeInner() {
   const router = useRouter();
-  const theme = useTheme();
-  const [pet, setPet] = useState<Pet | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [hubId, setHubId] = useState<string | null>(null);
+  const [checking, setChecking] = useState(true);
+  const [petName, setPetName] = useState<string | null>(null);
+  const [petState, setPetState] = useState<PetState>("at_home");
+  const [events, setEvents] = useState<TimelineItem[]>([]);
+  const [generating, setGenerating] = useState(false);
+  const [devTip, setDevTip] = useState<string | null>(null);
+  const { packDisplayName, packName } = useTheme();
 
   const load = useCallback(async () => {
-    setLoading(true);
     try {
-      const meRes = await fetch("/api/auth/me");
-      if (!meRes.ok) {
-        router.replace("/login");
+      const res = await fetch("/api/pet/timeline", { cache: "no-store" });
+      if (res.status === 401) {
+        router.push("/login");
         return;
       }
-      const me = await meRes.json();
-      setUserId(me.userId);
-      setHubId(me.hubId);
-
-      const petRes = await fetch("/api/pet");
-      const petData = await petRes.json();
-      if (petData.pet) {
-        setPet(petData.pet);
+      const data = (await res.json()) as TimelineResponse;
+      if (!data.ok) return;
+      if (!data.pet) {
+        router.push("/create-pet");
+        return;
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "加载失败");
+      setPetName(data.pet.name);
+      setPetState(data.pet.state);
+      setEvents(data.events);
+    } catch {
+      // ignore
     } finally {
-      setLoading(false);
+      setChecking(false);
     }
   }, [router]);
 
@@ -64,90 +76,129 @@ export default function HomePage() {
     void load();
   }, [load]);
 
-  async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.replace("/login");
+  const generateEvent = async (type?: EventTypeValue) => {
+    setGenerating(true);
+    setDevTip(null);
+    try {
+      const res = await fetch("/api/pet/generate-event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(type ? { type } : {}),
+      });
+      if (res.status === 403) {
+        setDevTip("生产模式禁用了开发端点");
+        return;
+      }
+      if (!res.ok) {
+        const err = await res.json();
+        setDevTip(err?.error ?? "生成失败");
+        return;
+      }
+      const data = await res.json();
+      setPetState(data.nextPet.state);
+      await load();
+    } catch (e) {
+      setDevTip(`网络错误：${String(e)}`);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  if (checking) {
+    return (
+      <div
+        className="flex h-screen items-center justify-center"
+        style={{ color: "var(--muted)" }}
+      >
+        正在唤醒 {packDisplayName ?? packName ?? "aetherPet"}…
+      </div>
+    );
   }
 
   return (
-    <main className="flex-1 flex flex-col">
-      {/* 顶栏 */}
-      <header
-        className="flex items-center justify-between px-6 py-3 border-b"
-        style={{ borderColor: "var(--border)", background: "var(--paper)" }}
-      >
-        <div className="flex items-center gap-3">
-          <span className="text-lg font-semibold" style={{ fontFamily: "KaiTi, serif" }}>
-            aetherPet
-          </span>
-          {hubId && (
-            <span className="text-xs px-2 py-0.5 rounded" style={{ background: "var(--accent)", color: "white" }}>
-              中心：{hubId}
-            </span>
-          )}
+    <div className="max-w-2xl mx-auto p-6 pb-32 space-y-4">
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: "var(--pack-ink)" }}>
+            {petName}
+          </h1>
+          <p className="text-xs" style={{ color: "var(--muted)" }}>
+            {packDisplayName ?? packName ?? "aetherPet"} ·{" "}
+            {petState === "at_home"
+              ? "在家"
+              : petState === "out_walking"
+                ? "出门中"
+                : "旅行中"}
+          </p>
         </div>
-        <button
-          onClick={logout}
-          className="text-sm px-3 py-1 rounded border"
-          style={{ borderColor: "var(--border)", color: "var(--muted)" }}
-        >
-          退出登录
-        </button>
+        <a href="/settings" className="text-xs underline" style={{ color: "var(--muted)" }}>
+          设置
+        </a>
       </header>
 
-      {/* 主区 */}
-      <section className="flex-1 flex items-center justify-center p-6">
-        {loading ? (
-          <p style={{ color: "var(--muted)" }}>加载中...</p>
-        ) : error ? (
-          <p style={{ color: "#991b1b" }}>{error}</p>
-        ) : !pet ? (
-          <div className="paper p-8 text-center space-y-4 max-w-md">
-            <p>你还没有 pet。</p>
-            <button
-              onClick={() => router.replace("/create-pet")}
-              className="px-6 py-2 rounded font-medium"
-              style={{ background: "var(--primary)", color: "white" }}
-            >
-              创建第一只 pet
-            </button>
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
+          最近发生的事
+        </h2>
+        {events.length === 0 ? (
+          <div className="text-sm p-6 text-center rounded-lg" style={{ color: "var(--muted)", background: "var(--pack-paper)" }}>
+            还没有事件。点击"触发一次随机事件"生成。
           </div>
         ) : (
-          <div className="paper p-8 w-full max-w-2md space-y-6 text-center">
-            <div>
-              <h1
-                className="text-4xl font-semibold"
-                style={{ fontFamily: "KaiTi, serif", color: "var(--ink)" }}
-              >
-                {pet.name}
-              </h1>
-              <p className="mt-2 text-lg" style={{ color: "var(--muted)" }}>
-                · {STATE_LABELS[pet.state] ?? pet.state} ·
-              </p>
-            </div>
-
-            <div
-              className="rounded-lg p-6 space-y-2"
-              style={{ background: "var(--primary)", color: "white" }}
-            >
-              <p className="text-sm opacity-80">当前素材包</p>
-              <p className="text-lg font-medium">
-                {theme.packDisplayName ?? "官方默认（手绘暖调）"}
-              </p>
-              {theme.loading && <p className="text-xs opacity-70">素材加载中...</p>}
-              {!theme.loading && !theme.packName && (
-                <p className="text-xs opacity-70">素材加载失败，使用降级模式</p>
-              )}
-            </div>
-
-            {theme.availablePacks.length > 0 && (
-              <div className="text-xs" style={{ color: "var(--muted)" }}>
-                可用素材包：{theme.availablePacks.map((p) => p.displayName).join(" · ")}
-              </div>
-            )}
-          </div>
+          events.map((it) => (
+            <EventCard
+              key={it.event.id}
+              event={it.event}
+              petName={petName ?? ""}
+              rendered={it.rendered}
+            />
+          ))
         )}
       </section>
-    </main>
+
+      {/* 开发工具区（仅非生产模式） */}
+      <section className="mt-6 p-4 rounded-lg border border-dashed" style={{ borderColor: "var(--muted)" }}>
+        <h3 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--muted)" }}>
+          开发工具（阶段 2 演示）
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => void generateEvent()}
+            disabled={generating}
+            className="px-3 py-1.5 rounded text-sm"
+            style={{ background: "var(--pack-accent)", color: "white" }}
+          >
+            {generating ? "生成中…" : "随机触发一次"}
+          </button>
+          {FORCE_TYPES.map((t) => (
+            <button
+              key={t}
+              onClick={() => void generateEvent(t)}
+              disabled={generating}
+              className="px-2 py-1 rounded text-xs border"
+              style={{ borderColor: "var(--muted)", color: "var(--pack-ink)" }}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+        {devTip && (
+          <p className="mt-2 text-xs" style={{ color: "var(--danger)" }}>
+            {devTip}
+          </p>
+        )}
+        <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
+          事件引擎：{petName} 的状态 {petState}；新事件会插入时间线上方。
+        </p>
+      </section>
+    </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <ThemeProvider>
+      <HomeInner />
+    </ThemeProvider>
   );
 }

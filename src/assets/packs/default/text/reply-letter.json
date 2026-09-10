@@ -1,29 +1,27 @@
 {
-  "type": "reply_letter",
-  "slots": {
-    "title": { "mode": "fixed", "default": "给 {pet_name} 的一封信" },
-    "body": {
-      "mode": "template",
-      "variants": {
-        "daily": [
-          "今天收到 {item}，{recall_line}。",
-          "{pet_name}，谢谢你送来的 {item}。",
-          "{recall_line} 谢谢你把这些都记在心上。"
-        ],
-        "poetic": [
-          "{pet_name}，你送来的 {item}，让我想起了 {recall_line}。",
-          "信到。{item} 已收。{recall_line}"
-        ]
-      },
-      "poetic_ratio": 0.10
+  "title": { "mode": "fixed", "default": "{pet_name}" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "{item} 我收下了，放在桌上等你回来",
+        "谢谢你，{item} 我留着了",
+        "看到 {item} 的时候我愣了一下，然后笑了",
+        "把 {item} 藏起来了，下次见面再给你看",
+        "你把 {item} 放桌上的时候，我正做梦",
+        "今天收到 {item}，一整天心情都挺好",
+        "{pet_name} 收到 {item} 了，谢谢 {recall_line}",
+        "把 {item} 放在窗户边，让它晒晒太阳"
+      ],
+      "poetic": [
+        "你把 {item} 留在我的门缝里，像一句没说出口的话",
+        "我收下 {item}，也顺手收下那天下午的光",
+        "{item} 上还有你手指的温度"
+      ]
     },
-    "sign_off": { "mode": "template", "variants": ["— {pet_name}", "—— {pet_name}"] }
+    "poetic_ratio": 0.1
   },
-  "assets": {
-    "letter_bg": "images/letter-bg.svg",
-    "icon": "images/icons/letter.svg"
-  },
-  "highlight": { "memory_refs": true, "anchor_style": "underline" },
+  "sign_off": { "mode": "fixed", "default": "—— {pet_name}" },
   "recall_required": ["item_name", "pet_name", "time_anchor"],
   "recall_min_count": 1
 }

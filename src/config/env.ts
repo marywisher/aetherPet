@@ -14,7 +14,7 @@ const bool = z
   .union([z.boolean(), z.enum(["true", "false", "1", "0"])])
   .transform((v) => (typeof v === "boolean" ? v : ["true", "1"].includes(v)));
 
-const envSchema = z.object({
+export const envSchema = z.object({
   // ============== 数据库 ==============
   DB_HOST: z.string().min(1).default("127.0.0.1"),
   DB_PORT: z.coerce.number().int().positive().default(3306),
@@ -65,6 +65,11 @@ const envSchema = z.object({
   TRUST_PROXY: bool.default(false),
   // 反代信任跳数（从右往左，对应 X-Forwarded-For 里的段数）
   PROXY_TRUST_HOPS: z.coerce.number().int().positive().default(1),
+  // 是否开启开发端点白名单（Round 2 修复 P2-013）。
+  // 生产模式下 /api/pet/generate-event 默认禁用；仅当此字段显式为 true 才允许开启。
+  // 典型用途：内网演示 / staging 环境需要手动触发生成器调试。
+  // 警告：本项只影响 /api/pet/generate-event 一个端点，不会放宽其他端点。
+  ENABLE_DEV_ENDPOINTS: bool.default(false),
 });
 
 export type Env = z.infer<typeof envSchema>;

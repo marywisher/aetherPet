@@ -1,372 +1,382 @@
-# Round 2 修复报告 · 阶段 1（地基 + 认证 + 素材包加载）
+# 修复报告 · Round 2 · 剩余 P1/P2 问题（阶段 2 收官）
 
-> 依据文档：`reports/qa-round-2.md`（待修复清单）
-> 依据约束：`docs/current-stage.md`、`docs/architecture.md v1.1`、`docs/database-schema.md v1.1`、`docs/requirements.md`、`CONTEXT.md`
-> 修复时间：2026-09-09
+> 报告路径：`reports/fix-round-2.md`  
+> 关联：`reports/qa-round-2.md`（Round 2 质检结论）  
+> 修复范围：1 P2（新发现 P2-013）+ 2 P2（延后项 P2-007、P2-012）+ 2 P3（P3-N001、P3-001 剩余）+ 1 P3 文档（P3-004）  
+> 检查时间：2026-09-10  
 > 修复人：软件工程师
 
 ---
 
-## 1. 修复摘要
+## 1. 概览
 
-| 项 | Round 2 发现 | Round 2 修复 |
-|---|-------------|-------------|
-| P1（严重） | 1 | **1/1**（P1-005） |
-| P2（一般） | 6 | **6/6**（P2-007/008/009/010/011/012） |
-| P3（轻微） | 6 | **5/6**（P3-002/003/004/005/006；P3-001b 已并入 P3-002） |
-| 单测总数 | 97/97 | **138/138**（+41） |
-| TypeScript 类型检查 | 通过 | **通过**（0 错误） |
-| Next.js build | 通过（含 loader trace 告警） | **通过**（trace 告警消除） |
+Round 2 质检报告在通过阶段 2 收官的同时，识别出 1 个新 P2（P2-013）+ 1 个新 P3（P3-N001），并把 5 项历史 P2 + 8 项 P3 延后到阶段 3。
 
-**结论**：Round 2 质检列出的 P1×1、P2×6、P3×5 全部修复，另将 P3-001b（Round 1 遗留）通过 P3-002 一并解决。全部 15 个测试文件 138 个用例通过；构建产物无 "filesystem access causes the whole project to be traced" 告警。
+本轮修复策略：
 
----
-
-## 2. 修复清单（逐项）
-
-### 2.1 P1-005 · `audit.repo.ts` 硬编码 `hub_id='local'` → 参数化 + env 兜底 ✅
-
-**修改文件**：
-- `src/domain/persistence/repos/audit.repo.ts` — `AuditLogInput` 新增 `hubId` / `schemaVersion` 字段；SQL 语句全部改为参数化占位符；`hubId` 从 `entry.hubId ?? env.HUB_ID` 取；`schemaVersion` 从 `entry.schemaVersion ?? "1.0.0"` 取。
-- `tests/unit/persistence/audit.repo.test.ts` — 新增 8 个用例覆盖：env 兜底、显式传入优先、SQL 无硬编码、detail null 序列化。
-
-**验证证据**：
-```ts
-// SQL 参数化（8 个 ? 占位符）
-INSERT INTO audit_log
-  (user_id, event_type, detail, ip, user_agent, created_at, schema_version, hub_id)
- VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-```
-测试断言：
-```ts
-expect(call[7]).toBe("test-hub");   // env.HUB_ID 兜底
-expect(call[7]).toBe("custom-hub"); // 显式传入优先
-expect(sql).not.toMatch(/VALUES\s*\([^)]*'local'/); // 不再硬编码
-```
-
-**架构对齐**：`docs/architecture.md §7.1` + `docs/database-schema.md §4.1` — 多中心数据主权要求所有业务表 `hub_id` 从实际中心身份取值，不再"自托管默认 local"硬编码。
+| 修复项 | 优先级 | 是否本轮修 | 备注 |
+|--------|--------|-----------|------|
+| P2-013 · `ENABLE_DEV_ENDPOINTS` 白名单机制死代码 | P2（新） | ✅ 本轮修 | Round 2 报告建议顺手修（5 分钟） |
+| P3-N001 · `INITIAL_EVENT_COUNT` 死代码 | P3（新） | ✅ 本轮修 | 与 P2-008 相关，顺手清理 |
+| P2-007 · `generateTimeAnchor` 死代码分支 | P2（延后） | ✅ 本轮修 | 简单删除，无行为影响 |
+| P2-012 · aggregate-summary 契约矛盾 | P2（延后） | ✅ 本轮修 | 契约与代码对齐（1 处文档修改） |
+| P3-001 剩余 · 生成器 `void X;` 死代码 | P3（延后） | ✅ 本轮修 | 3 个生成器顺手清理 |
+| P3-004 · `current-stage.md` 文案数声明不符 | P3（延后） | ✅ 本轮修 | 文档微调 |
+| P2-006 · `MemoryRef.kind` 语义丢失 | P2（延后） | ❌ **延后阶段 3** | 契约 v1.1.0 bump + 10+ 文件联动，见 §5 说明 |
 
 ---
 
-### 2.2 P2-007 · `startup` 失败后无自愈 + `healthz` 3s 超时误报 ✅
+## 2. 变更文件清单
 
-**修改文件**：
-- `src/lib/startup.ts` — 引入 `_lastFailTs` 时间戳；`RECOVERY_COOLDOWN_MS = 30s` 冷却期；导出 `shouldProbeRecovery()`；`StartupState` 增加 `lastFailTs` / `retryInMs`。
-- `src/app/api/healthz/route.ts` — `STARTUP_TIMEOUT_MS` 默认 3s → **8s**（覆盖 3×退避×3 子步骤最坏 8400ms）；env 可覆盖；`ok` 判定改为 `dbCheck.ok && hub.hubId.length > 0`（不再依赖 `startupState.failed`），startup 状态仅暴露给运维诊断。
-
-**验证证据**：
-```ts
-// 冷却期外触发一次重试探测（非阻塞）
-if (shouldProbeRecovery()) {
-  void startup();
-}
-// ok 只依赖实时探测
-const ok = dbCheck.ok && hub.hubId.length > 0;
-```
-
-**新增测试** `tests/unit/lib/startup.test.ts`（6 用例）：
-- 默认未 started/failed
-- 成功启动后 started=true
-- initPool 失败时 failed=true 且 lastFailTs 记录
-- 冷却期内 shouldProbeRecovery=false + retryInMs > 0
-- started=true 时 shouldProbeRecovery=false
-- failed=false 时 shouldProbeRecovery=false
-
-**运维效果**：MySQL 短暂抖动后，healthz 在冷却期外（默认 30s）会自动触发一次探测重试，DB 恢复后无需重启进程即恢复。
+| 文件 | 变更类型 | 修复项 | 说明 |
+|------|---------|--------|------|
+| `src/config/env.ts` | 修改 | P2-013 | 新增 `ENABLE_DEV_ENDPOINTS: bool.default(false)` 字段；`envSchema` 导出供测试 |
+| `.env.example` | 修改 | P2-013 | 同步新增 `ENABLE_DEV_ENDPOINTS=false` 与注释 |
+| `src/app/api/pet/generate-event/route.ts` | 修改 | P2-013 | `isDevEndpointEnabled` 类型收窄为 `ENABLE_DEV_ENDPOINTS?: boolean`，比较改为 `=== true` |
+| `tests/unit/config/env.test.ts` | **新增** | P2-013 | 11 用例覆盖 zod 解析、fail-closed、白名单、非法值、组合逻辑 |
+| `src/app/api/pet/create/route.ts` | 修改 | P3-N001 | 删除未使用的 `INITIAL_EVENT_COUNT` 常量 |
+| `src/domain/memory/anchoring.ts` | 修改 | P2-007 | `generateTimeAnchor` 删除 `daysAgo > 6` 不可达分支，删除 `now` 参数与 `_now` 死变量 |
+| `src/domain/events/generators/outing.ts` | 修改 | P3-001 | 删除未使用的 `randFloat` import 与 `void randFloat` |
+| `src/domain/events/generators/announcement.ts` | 修改 | P3-001 | 系统公告不需要随机性，删除 `rng` 解构与 `void rng` |
+| `src/domain/events/generators/reply-letter.ts` | 修改 | P3-001 | 删除未使用的 `pickOne` import 与 `void pickOne` |
+| `docs/packs-contract.md` | 修改 | P2-012 | aggregate_summary 契约 `recall_min_count` 从 0 改为 1（对齐实际 `nameForceProb=1` 行为） |
+| `docs/current-stage.md` | 修改 | P3-004 | 文案总数从 121 改为约 113；测试数从 223 更新为 259；补充 Round 2 修复后测试统计 |
 
 ---
 
-### 2.3 P2-008 · `loader.ts` 触发 Next.js build trace 告警 ✅
+## 3. 逐项修复说明
 
-**修改文件**：
-- `src/domain/packs/loader.ts` — 引入 `fileURLToPath(import.meta.url)` 计算静态 `MODULE_DIR` 与 `PROJECT_ROOT`；`path.resolve(process.cwd(), dir)` 改为 `path.resolve(PROJECT_ROOT, rawDir)`（`rawDir` 绝对路径时直接用）。
-- `next.config.ts` — 新增 `outputFileTracingIncludes`：`"/packs/*": ["src/assets/packs/**/*"]` 显式界定 trace 范围；`outputFileTracingExcludes` 排除 `.env*` / `*.log`。
+### 3.1 P2-013 · `ENABLE_DEV_ENDPOINTS` 白名单机制死代码 ✅
 
-**验证证据**：`npx next build` 不再出现 "Static analysis determined that this filesystem access causes the whole project to be traced and included in the output" 告警。grep 结果 0 匹配。
+**问题回顾**（Round 2 §5.1）：
 
-**架构对齐**：`docs/architecture.md §3.1` 领域层纯 TS 硬约束保持不变；loader 仍在 `src/domain/packs/`；仅路径解析方式从"运行时 `process.cwd()`"改为"编译时 `import.meta.url` 静态锚点"。
+`generate-event/route.ts` 依赖 `env.ENABLE_DEV_ENDPOINTS === "true"`，但 `src/config/env.ts` 的 zod schema 未声明该字段。由于 `z.object()` 默认 strip 未声明键，运行时该字段永远为 `undefined`，白名单永远返回 false。默认拒绝是 fail-closed 安全（生产端点仍然 403），但错误消息误导用户「需设置 ENABLE_DEV_ENDPOINTS=true」。
 
----
+**修复**：
 
-### 2.4 P2-009 · `pets.repo.insert` 硬编码 `active_pack_name='default'` ✅
+1. **`src/config/env.ts`**：在 `envSchema` 中注册字段
+   ```ts
+   // 是否开启开发端点白名单（Round 2 修复 P2-013）。
+   // 生产模式下 /api/pet/generate-event 默认禁用；仅当此字段显式为 true 才允许开启。
+   ENABLE_DEV_ENDPOINTS: bool.default(false),
+   ```
+   使用现有 `bool` 转换器，支持 `true/false/1/0` 字符串与 boolean 混合。
 
-**修改文件**：
-- `src/domain/persistence/repos/pets.repo.ts` — 引入 `getEnv()`；`active_pack_name` 占位符从 `"default"` 改为 `env.DEFAULT_PACK`。
+2. **`src/app/api/pet/generate-event/route.ts`**：类型收窄 + 比较改为严格 boolean
+   ```ts
+   function isDevEndpointEnabled(env: { NODE_ENV?: string; ENABLE_DEV_ENDPOINTS?: boolean }): boolean {
+     const isProd = env.NODE_ENV === "production";
+     if (!isProd) return true;
+     return env.ENABLE_DEV_ENDPOINTS === true;
+   }
+   ```
+   zod 已把 `"true"` / `"1"` 转换为 `true`（bool.transform），此处直接 `=== true` 即可。
 
-**验证证据**：
-```ts
-const defaultPackName = env.DEFAULT_PACK;  // 默认 "default"，自托管可配置
-// INSERT ... active_pack_name = ?, ...
-[... , defaultPackName, ...]
-```
+3. **`.env.example`**：同步文档化
+   ```bash
+   # 是否开启开发端点白名单（Round 2 P2-013）
+   # 默认 false：生产模式下 /api/pet/generate-event 拒绝请求（返回 403）
+   # 置 true 可开启白名单，供内网演示 / staging 手动触发事件调试
+   # 警告：本项仅影响 /api/pet/generate-event，不会放宽其他端点
+   ENABLE_DEV_ENDPOINTS=false
+   ```
 
-**架构对齐**：`docs/architecture.md §3` 项目结构、`user_settings.active_pack_name` 表预留。自托管中心可通过 `.env` 定制默认包名，pet 记录不再硬编码。
+4. **`tests/unit/config/env.test.ts`**（新增）：11 用例
+   - 未设置 → 默认 false
+   - `"true"` / `"1"` → true
+   - `"false"` / `"0"` → false
+   - 非法字符串 → safeParse 失败
+   - 生产 + 未设白名单 → 拒绝
+   - 生产 + `ENABLE_DEV_ENDPOINTS=true` → 允许
+   - 开发模式 → 允许（不管白名单）
+   - TS 编译期断言 `Env.ENABLE_DEV_ENDPOINTS: boolean`
 
----
+**验证**：
 
-### 2.5 P2-010 · `TRUST_PROXY=true` 时 `X-Real-Ip` 无条件信任 → 收窄 ✅
-
-**修改文件**：
-- `src/lib/request-helpers.ts` — 只在 `XFF` 缺失 且 `socket.remoteAddress` 不可读时才读 `X-Real-Ip`；正常情况仍优先 `socket.remoteAddress`。
-- `tests/unit/lib/request-helpers.test.ts` — 新增 7 个 IP 提取用例覆盖各组合。
-
-**验证证据**：
-```ts
-if (env.TRUST_PROXY) {
-  // 先 XFF（右往左第 N 段）
-  if (forwarded) { ... }
-  // 兜底 X-Real-Ip 只在 socket 不可读时尝试
-  if (!socket?.remoteAddress) {
-    const real = req.headers.get("x-real-ip");
-    if (real) return real.trim();
-  }
-}
-```
-测试覆盖：
-- XFF + X-Real-Ip + socket 都在 → 取 XFF（不取 X-Real-Ip）
-- XFF 缺失 + socket 可读 → 取 socket（不取 X-Real-Ip）
-- XFF 缺失 + socket 不可读 → 才取 X-Real-Ip 兜底
-
----
-
-### 2.6 P2-011 · `packs/loader.ts` `_packsCache` 无失效机制 ✅
-
-**修改文件**：
-- `src/domain/packs/loader.ts` — 导出 `refreshPacks()` 手动清空缓存函数。
-- `src/app/api/packs/refresh/route.ts` — 新增 `POST /api/packs/refresh` 端点：
-  - `NODE_ENV=development`：无需 token
-  - `NODE_ENV=production`：需 Bearer token（`verifyToken` 校验）
-- `tests/unit/app/packs-refresh-route.test.ts` — 4 个用例覆盖。
-
-**运维效果**：
 ```bash
-# 开发模式热加新素材包后立即生效
-curl -X POST http://localhost:3000/api/packs/refresh
-# 生产模式需带 token
-curl -X POST -H "Authorization: Bearer $TOKEN" http://your-hub/api/packs/refresh
+$ node -e "import('./src/config/env.ts').then(m => console.log(m.envSchema.safeParse({NODE_ENV:'production', ENABLE_DEV_ENDPOINTS:'true'}).data.ENABLE_DEV_ENDPOINTS))"
+true  # 之前是 undefined（白名单失效）
 ```
 
----
-
-### 2.7 P2-012 · `throttle.ts` 三个 Map 无上限增长 → LRU FIFO 淘汰 ✅
-
-**修改文件**：
-- `src/domain/auth/throttle.ts` — 新增 `BUCKET_MAX_ENTRIES = 5_000`；`_setWithEviction()` 在写入前检查 Map 大小，达到上限时删除前一半最老的 key（Map 迭代顺序即插入顺序 = 最老）；新增 `_getBucketSizes()` 测试用导出。
-- `tests/unit/auth/throttle.test.ts` — 新增 4 个 LRU 上限用例。
-
-**验证证据**：
-```ts
-function _evictIfFull<K, V>(bucket: Map<K, V>): void {
-  if (bucket.size < BUCKET_MAX_ENTRIES) return;
-  let i = 0;
-  const half = Math.floor(BUCKET_MAX_ENTRIES / 2);
-  for (const key of bucket.keys()) {
-    bucket.delete(key);
-    i += 1;
-    if (i >= half) break;
-  }
-}
-```
-测试覆盖：3 个桶各自达上限后仍受保护，Map 大小 ≤ 5000。
-
-**内存上限**：5000 条目 × ~30B/条 ≈ 150KB，长期驻留可控。
+**风险**：极低。默认值 fail-closed（`false`），与之前行为完全一致；仅当显式设 `=true` 才生效。
 
 ---
 
-### 2.8 P3-002 · `getEffectivePack` 参数冗余 → 重构三参数签名 ✅
+### 3.2 P3-N001 · `create/route.ts` 未使用常量 ✅
 
-**修改文件**：
-- `src/domain/packs/fallback.ts` — `getEffectivePack(requestedPackName, defaultPackName, packs)` 三参数签名；当 `requestedPackName === defaultPackName` 时行为不变（MVP 兼容）。
-- `src/app/api/packs/route.ts` — 调用改为 `getEffectivePack(env.DEFAULT_PACK, env.DEFAULT_PACK, packs)`。
-- `tests/unit/packs/fallback.test.ts` — 新增 3 个用例：requested ≠ default 时正确返回 requested；requested 缺失/损坏时 fallback 到 default。
+**问题回顾**（Round 2 §5.2）：
 
-**架构对齐**：为阶段 2/6 用户级 `user_settings.active_pack_name` 切换预留 API。
+P2-008 修复后 `INITIAL_EVENT_COUNT = 2` 常量被 `1 + Math.floor(Math.random() * 3)` 取代，但常量未删除。
 
----
+**修复**：`src/app/api/pet/create/route.ts`
 
-### 2.9 P3-003 · `logout` 未走 Bearer token → 与 me/pet 一致 ✅
+- 删除 `const INITIAL_EVENT_COUNT = 2;`
+- 保留位置注释解释随机化实现，避免后续维护者困惑
 
-**修改文件**：
-- `src/app/api/auth/logout/route.ts` — 用 `extractBearerToken(req) ?? cookieMatch[1]`，与 `me`/`pet`/`pet/create` 一致。
+**验证**：`npx tsc --noEmit` 通过（无 unused 告警）。
 
 ---
 
-### 2.10 P3-004 · `requestCode` / `sendEmail` audit 写失败阻塞业务 → 包 try/catch ✅
+### 3.3 P2-007 · `generateTimeAnchor` 死代码分支 ✅
 
-**修改文件**：
-- `src/domain/auth/magic-link.ts` — 新增 `safeAudit()` helper；所有 `auditRepo.insertAuditLog` 调用改为 `safeAudit`（`sed` 替换 6 处）。
-- `src/domain/auth/mail-sender.ts` — 3 处 `insertAuditLog` 分别包 try/catch。
-- `src/app/api/auth/logout/route.ts` — `insertAuditLog` 包 try/catch。
+**问题回顾**（Round 1 报告 §4）：
 
-**验证证据**：
-```ts
-async function safeAudit(entry): Promise<void> {
-  try {
-    await auditRepo.insertAuditLog(entry);
-  } catch (err) {
-    console.warn("[audit] write failed:", err);
-  }
-}
+`generateTimeAnchor` 中 `daysAgo = 1 + Math.floor(rng() * 6)` 只会产出 1..6，但代码保留了 `daysAgo <= 9 / <= 14 / else` 三个不可达分支，同时 `_now` 变量也未使用。
+
+**修复**：`src/domain/memory/anchoring.ts`
+
+- 删除 `_now = now ?? Date.now()` 与 `void _now`
+- 删除 `now?: number` 参数
+- 删除 `daysAgo <= 9`（上周）、`daysAgo <= 14`（上上周）、`else`（很久之前）三个不可达分支
+- 保留 1..6 的四种表达：昨天 / 前天 / X 天前 / 前几天
+- 更新注释：若需「上周/上上周/很久之前」，使用 `pickAnchor`（独立候选池）
+
+**验证**：
+
+- `tests/unit/domain/memory/anchoring.test.ts` 原有 6 用例全部通过（无回归）
+- `grep "daysAgo.*<=.*9" src/domain/memory/anchoring.ts` → 0 匹配
+
+**风险**：无。行为不变（原本就只走 1..6 分支）。
+
+---
+
+### 3.4 P2-012 · aggregate-summary 契约矛盾 ✅
+
+**问题回顾**（Round 1 报告 §4）：
+
+- 代码：`aggregate-summary.ts:37` 使用 `nameForceProb: 1`（强制注入 pet_name）
+- 契约：`§5` 声明 `recall_required: pet_name（强制）` + `recall_min_count: 0`
+
+两者矛盾——既然「强制」，`recall_min_count` 不应为 0。
+
+**修复选择**：
+
+对齐代码 → 契约更新。理由：聚合摘要是"给 pet 的一句话总结"，pet 名字必须出现在文案中才有上下文；`nameForceProb=1` 是设计意图，改为 0.5 会让部分聚合事件不带名字，不符合业务预期。
+
+**修复**：`docs/packs-contract.md §5`
+
+```markdown
+| `aggregate_summary` | catchup | `span_days, items_collected, outings, travel_nights` | `pet_name`（强制） | 1 | no-op |
 ```
 
-**运维效果**：审计 DB 短暂不可用时，验证码签发/校验/退出登录均不阻塞，仅日志 warning。
+同时删除下方「nameForceProb=1 与 recall_min_count=0 同时存在」的说明性注释，替换为一句对齐说明。
+
+**验证**：契约表述与代码一致，无运行时影响（契约是文档）。
+
+**风险**：极低。仅是契约与代码对齐。若未来需要改为"非强制"，只需将 `nameForceProb` 降为 0.5 并同步契约。
 
 ---
 
-### 2.11 P3-005 · `parseJsonBody` 无 body size 限制 → 1MB 上限 ✅
+### 3.5 P3-001 剩余 · 生成器死代码 `void X;` 清理 ✅
 
-**修改文件**：
-- `src/lib/request-helpers.ts` — 新增 `MAX_BODY_BYTES = 1_048_576`（env 可覆盖）；两次检查：先 `Content-Length` header 快速拒绝，再 `arrayBuffer` 实际大小二次保险。
-- `tests/unit/lib/request-helpers.test.ts` — 4 个用例覆盖合法/非法/超限。
+**问题回顾**（Round 1 报告 §5，P3-001）：
 
-**验证证据**：
-```ts
-const contentLength = req.headers.get("content-length");
-if (contentLength && Number(contentLength) > MAX_BODY_BYTES) {
-  return { ok: false, error: "请求体过大" };
-}
-const buf = await req.arrayBuffer();
-if (buf.byteLength > MAX_BODY_BYTES) {
-  return { ok: false, error: "请求体过大" };
-}
-```
+Round 1 修了 `generate-event/route.ts` 里的 3 处 `void X;`，Round 2 报告确认剩余 3 处仍在生成器里：`announcement.ts:25`、`outing.ts:56`、`reply-letter.ts:80`。这些是"避免 TS unused import/param 报错"的占位符，无实际功能。
 
----
+**修复**：
 
-### 2.12 P3-006 · `file.includes("..")` 误伤合法文件名 → 段级校验 ✅
+1. **`outing.ts`**：删除未使用的 `randFloat` import 与 `void randFloat`
+   ```ts
+   // 之前：import { randInt, randFloat, pickOne } from "../rng";
+   // 之后：import { randInt, pickOne } from "../rng";
+   ```
 
-**修改文件**：
-- `src/app/packs/[name]/[file]/route.ts` — 拆分 `/` 和 `\` 后的段，任一段 `=== ".."` 或 `"."` 才拒绝；绝对路径单独拒绝。
-- `src/domain/packs/loader.ts` (`readPackFile`) — 同样改为段级校验。
-- `tests/unit/app/packs-route.test.ts` — 现有用例（`../../secret.txt`、`/etc/passwd`）继续通过。
+2. **`announcement.ts`**：系统公告不需要随机性，删除 `rng` 解构与 `void rng`
+   ```ts
+   // 之前：const { pet, rng = Math.random } = ctx; void rng;
+   // 之后：const { pet } = ctx;
+   ```
 
-**验证证据**：
-```ts
-const segments = file.split(/[\\/]/);
-if (segments.some((seg) => seg === ".." || seg === ".")) {
-  return NextResponse.json({ error: "非法路径" }, { status: 400 });
-}
-```
-现在 `foo..css`（合法）可以通过，`../../secret.txt`（恶意）仍被拒绝。
+3. **`reply-letter.ts`**：删除未使用的 `pickOne` import 与 `void pickOne`
+
+**验证**：`grep -rn "void .*;" src/domain/events/generators/` → 0 匹配
+
+**风险**：无。所有 `void X;` 本就是无用语句，删除不影响运行时行为。测试全部通过。
 
 ---
 
-## 3. 新增测试文件
+### 3.6 P3-004 · `current-stage.md` 文案数声明不符 ✅
 
-| 文件 | 用例数 | 覆盖 |
-|-----|-------|------|
-| `tests/unit/persistence/audit.repo.test.ts` | 8 | P1-005 audit hub_id 参数化 + env 兜底 |
-| `tests/unit/lib/request-helpers.test.ts` | 12 | P2-010 X-Real-Ip 收窄 + P3-005 body size limit |
-| `tests/unit/lib/startup.test.ts` | 6 | P2-007 自愈探测 |
-| `tests/unit/app/packs-refresh-route.test.ts` | 4 | P2-011 packs refresh 端点 |
-| `tests/unit/auth/throttle.test.ts`（新增 4） | +4 | P2-012 LRU 淘汰 |
-| `tests/unit/packs/fallback.test.ts`（新增 3） | +3 | P3-002 三参数签名 |
+**问题回顾**（Round 1 §5.3）：
 
-**新增测试合计**：37 个新用例。
+`docs/current-stage.md:44` 声明"121 条独特文案"，实际因 `system-announce.json` 只有 2 daily + 1 poetic = 3 条（非 8+3），实际是 11 类 × 9 - (8+3-3) = 113 条。
 
----
+**修复**：`docs/current-stage.md`
 
-## 4. 变更文件清单
-
-### 修改（10 个）
-
-- `src/domain/persistence/repos/audit.repo.ts` — P1-005
-- `src/domain/persistence/repos/pets.repo.ts` — P2-009
-- `src/domain/packs/fallback.ts` — P3-002
-- `src/domain/packs/loader.ts` — P2-008 + P2-011 + P3-006
-- `src/domain/auth/magic-link.ts` — P3-004（safeAudit）
-- `src/domain/auth/mail-sender.ts` — P3-004
-- `src/domain/auth/throttle.ts` — P2-012（LRU 淘汰）
-- `src/lib/startup.ts` — P2-007（自愈）
-- `src/lib/request-helpers.ts` — P2-010 + P3-005
-- `src/app/api/healthz/route.ts` — P2-007（判定解耦 + 8s 超时）
-- `src/app/api/auth/logout/route.ts` — P3-003 + P3-004
-- `src/app/api/packs/route.ts` — P3-002（调用签名更新）
-- `src/app/packs/[name]/[file]/route.ts` — P3-006
-- `next.config.ts` — P2-008（outputFileTracingIncludes）
-
-### 新增（4 个）
-
-- `src/app/api/packs/refresh/route.ts` — P2-011
-- `tests/unit/persistence/audit.repo.test.ts` — P1-005
-- `tests/unit/lib/request-helpers.test.ts` — P2-010 + P3-005
-- `tests/unit/lib/startup.test.ts` — P2-007
-- `tests/unit/app/packs-refresh-route.test.ts` — P2-011
+- 文案总数从 `121 条独特文案` 改为 `约 113 条独特文案（11 类 × 9 变体，扣 system-announce 变体较少）`
+- 测试统计从 `新增 79 个单测，总计 223 个单测通过` 更新为 `新增 104 个单测，总计 259 个单测通过`（含 Round 2 修复后的 +11 用例）
+- 契约版本从 `v1.0.0` 更新为 `v1.0.1`
+- 补充 Round 2 各阶段测试新增统计
 
 ---
 
-## 5. 验证结果（实际执行）
+## 4. 验证结果
+
+### 4.1 类型检查
 
 ```bash
 $ npx tsc --noEmit
-# 无输出，通过
-
-$ npx vitest run
-# Test Files  15 passed (15)
-#      Tests  138 passed (138)
-# Duration 4.73s
-
-$ npx next build
-# ✓ Compiled successfully in 542ms
-# ✓ Generating static pages using 15 workers (15/15)
-# Route (app)
-# ├ ƒ /api/packs
-# ├ ƒ /api/packs/refresh          ← 新增
-# └ ƒ /packs/[name]/[file]
-# 无 "filesystem access causes the whole project to be traced" 告警
-
-$ grep -rn "sqlite\|better-sqlite" src/
-# 0 匹配（MySQL 硬约束保持）
-
-$ grep -rn "from 'next\|from 'react" src/domain/
-# 0 匹配（领域层硬约束保持）
-
-$ grep -rn "filesystem access\|whole project traced" <build output>
-# 0 匹配（P2-008 已消除）
+# 无输出，0 错误
 ```
 
-**环境限制**：Docker Desktop 未运行，MySQL 集成演示未实测；结论基于代码审查 + 单测 + 类型检查 + 构建。
+### 4.2 单元测试
+
+```bash
+$ npx vitest run
+ Test Files  25 passed (25)
+      Tests  259 passed (259)
+   Duration  4.71s
+```
+
+**较 Round 2 收官的 248/248 净增 +11 用例**（env.test.ts 新增 11 用例覆盖 P2-013 回归）。
+
+### 4.3 Next.js 构建
+
+```bash
+$ npx next build
+# ✓ Compiled successfully
+# 15 条路由全部注册
+# 无 filesystem access 告警
+# 无 build 错误
+```
+
+### 4.4 硬约束验证
+
+```bash
+$ grep -rn "from 'next\|from 'react" src/domain/
+# 0 匹配（领域层零框架依赖硬约束保持）✅
+
+$ grep -rn "sqlite\|better-sqlite" src/
+# 0 匹配（MySQL 硬约束保持）✅
+
+$ grep -rn "void .*;" src/domain/events/generators/
+# 0 匹配（P3-001 完全清理）✅
+
+$ grep -n "ENABLE_DEV_ENDPOINTS" src/config/env.ts .env.example
+# 各 1 匹配（P2-013 白名单机制已激活）✅
+```
 
 ---
 
-## 6. Round 2 遗留项（阶段 2/6 处理）
+## 5. 未修复项说明
 
-- **P3-001b 已并入 P3-002 修复**（`getEffectivePack` 三参数签名）
-- **P3-001e**（`env.ts` email 正则）— MVP 够用，暂不改
+### 5.1 P2-006 · `MemoryRef.kind` 语义丢失（延后阶段 3）
 
-无未修复的 Round 2 P1/P2。
+**问题**：`recall-strategy.ts:60` 把 `preference / place_visited / sentiment / custom` 全部归入 `place` 类锚点，丢失语义类型。
+
+**未修原因**：
+
+1. **契约冻结状态**：修改 `MemoryRef.kind` 类型定义需要 bump `pack_schema_version` 到 `1.1.0`（minor，向后兼容扩展）。当前契约 v1.0.1 是 Round 2 收官版本，阶段 2 结束才冻结；再在同阶段 bump 会打破"阶段 2 冻结契约"的承诺。
+
+2. **文档联动面广**：需要更新至少 5 处
+   - `src/domain/types.ts` — MemoryRef.kind 增加 `"preference" | "sentiment"`
+   - `src/domain/memory/recall-strategy.ts` — `memoryToRef` 映射
+   - `src/domain/events/render.ts` — `buildPlaceholderMap` 的 recallLine 构造（preference/sentiment 没有对应的自然语言模板）
+   - `docs/packs-contract.md` — §5 表、§7 元数据章节
+   - `docs/architecture.md` — §5 接口定义（`line 596-597`）
+   - `src/domain/events/types.ts` — `PACK_SCHEMA_VERSION = "1.1.0"`
+   - `src/assets/packs/default/manifest.json` — `pack_schema_version`
+   - 所有 pack_schema_version 相关的测试 fixture
+
+3. **`recallLine` 构造规则未定**：preference（如"喜欢黄昏"）、sentiment（如"感到温暖"）没有现成的自然语言包装模板。当前只有三种：
+   - time_anchor → `"{value}发生过的事"`
+   - item_name → `"收到过的 {value}"`
+   - place → `"{value}"`
+   
+   preference/sentiment 若强行归入 place 会保留旧语义丢失问题；若要独立，需要为它们设计新模板，属于**文案设计工作**，应在阶段 3 用户档案 UI 落地时统一规划。
+
+4. **阶段 3 更合适**：P2-006 的实际影响面在**用户档案页分组显示**（阶段 3 内容），阶段 2 UI 只使用事件卡片不分组，功能上不阻塞。
+
+**建议**：阶段 3 启动用户档案页时一并处理，配套：
+- 契约版本 bump 到 v1.1.0
+- 增加 preference/sentiment 的 recallLine 模板（如 `"想到 {value} 的时候"` / `"心里想着 {value}"`）
+- 用户档案页支持按 kind 分组展示
 
 ---
 
-## 7. 后续建议
+## 6. 与 Round 2 报告的对应关系
 
-### 演示前必修（1 项）
-
-1. **Docker MySQL 集成实测**（本轮未跑）：
-   ```bash
-   docker compose -f docker/docker-compose.dev.yml up -d mysql
-   npm run dev
-   curl http://localhost:3000/api/healthz
-   # 期望：200 + db.ok=true + startup.started=true + hub.hubId="local"
-   ```
-
-### 建议本轮一起验证（2 项）
-
-2. **P1-005 数据主权验证**：
-   - 在 `.env` 中改 `HUB_ID=official-hub` 后跑一次 `requestCode`，`audit_log.hub_id` 应写入 `'official-hub'`（不再是 `'local'`）
-   - 集成测试可后续加入 `001_init.sql` 逐字段比对
-
-3. **P2-007 自愈验证**：
-   - 启动后 kill MySQL 容器 → 触发一次 startup 失败 → 等 30s → 重启 MySQL 容器 → 触发 healthz → 期望 200 + startup.started=true
+| Round 2 报告项 | 本轮处理 | 说明 |
+|---------------|---------|------|
+| §5.1 P2-013（新 P2） | ✅ 已修（§3.1） | env schema 注册 + 类型收窄 + 11 用例测试 |
+| §5.2 P3-N001（新 P3） | ✅ 已修（§3.2） | 删除未使用常量 |
+| §4.1 P2-006（延后） | ❌ 仍延后阶段 3（§5.1） | 契约冻结冲突，见说明 |
+| §4.1 P2-007（延后） | ✅ 已修（§3.3） | 删除死代码分支 |
+| §4.1 P2-012（延后） | ✅ 已修（§3.4） | 契约与代码对齐 |
+| §4.2 P3-001 剩余（延后） | ✅ 已修（§3.5） | 3 个生成器清理 |
+| §5.3 P3-004（延后） | ✅ 已修（§3.6） | 文档微调 |
+| §4.2 其他 6 项 P3 | ❌ 延后阶段 3 | 低优先级，不影响演示 |
 
 ---
 
-## 8. 签名
+## 7. 测试覆盖演进
 
-- 修复：2026-09-09
+| 项 | Round 2 收官 | 本轮修复后 | 净增 |
+|---|-------------|-----------|-----|
+| 测试文件数 | 24 | **25** | +1（env.test.ts） |
+| 单测用例数 | 248 | **259** | **+11** |
+| `ENABLE_DEV_ENDPOINTS` 覆盖 | 0 | **11**（新增） | +11 |
+| `void X;` 死代码数 | 3（生成器） | **0** | -3 |
+
+---
+
+## 8. 阶段 2 收官状态
+
+| 维度 | Round 2 状态 | 本轮修复后 |
+|-----|-------------|-----------|
+| P0 阻塞 | 0 ✅ | **0** ✅ |
+| P1 严重 | 0 ✅ | **0** ✅ |
+| P2 一般（本轮相关） | 1（P2-013 新） | **0** ✅ |
+| P2 一般（延后阶段 3） | 3（P2-006/007/012） | **1**（仅 P2-006） |
+| P3 轻微 | 8 + P3-N001 新 | **7**（延后阶段 3） |
+| 单测通过 | 248/248 ✅ | **259/259** ✅ |
+| 类型检查 | 通过 ✅ | **通过** ✅ |
+| 构建 | 通过 ✅ | **通过** ✅ |
+| 领域层零 next/react | ✅ | **✅** |
+| MySQL 硬约束 | ✅ | **✅** |
+
+**结论**：本轮修复后，阶段 2 所有相关 P1/P2 问题全部清零；剩余 1 项 P2（P2-006）与 7 项 P3 已明确延后阶段 3，均有理由。
+
+---
+
+## 9. 交付清单
+
+- [x] P2-013 修复（env schema + route + .env.example + 11 用例测试）
+- [x] P3-N001 修复（删除未使用常量）
+- [x] P2-007 修复（清理死代码分支）
+- [x] P2-012 修复（契约对齐）
+- [x] P3-001 剩余修复（3 个生成器清理）
+- [x] P3-004 修复（文档微调）
+- [x] 类型检查通过（`npx tsc --noEmit`）
+- [x] 单元测试通过（259/259）
+- [x] Next.js 构建通过
+- [x] 硬约束验证通过（领域层零框架 + MySQL）
+- [x] `docs/current-stage.md` 更新测试统计
+- [x] `reports/fix-round-2.md` 修复报告
+
+**未处理（明确延后阶段 3）**：
+- P2-006 · MemoryRef.kind 语义丢失（契约 v1.1.0 bump + 8+ 文件联动）
+- 7 项 P3 低优先级
+
+---
+
+## 10. 下一步建议
+
+1. **交 git 提交专员提交**：本轮所有变更可提交（不阻塞阶段 2 收官）
+2. **进入阶段 3 计划**：
+   - 阶段 3 启动前建议先做 P2-006 契约 bump（配合用户档案页设计）
+   - 时间线 UI、补算、聚合摘要 UI 是阶段 3 主体
+3. **无需再补测试**：本轮测试覆盖已达标（259/259，含 11 用例覆盖 P2-013 回归）
+
+---
+
+## 11. 签名
+
+- **软件工程师：2026-09-10（Round 2 收官修复）**
 - 报告文件：`reports/fix-round-2.md`
-- 关联文件：`reports/qa-round-2.md`（质检报告）、`reports/qa-round-1.md`、`reports/fix-round-1.md`
-- 后续动作：
-  1. 交回质检做 Round 3 回归
-  2. 工程师/CI 跑 Docker MySQL 集成实测
-  3. 全部通过后交 git 提交专员提交
+- 关联文件：
+  - `reports/qa-round-2.md`（Round 2 质检输入）
+  - `reports/fix-round-1.md`（Round 1 修复报告）
+  - `docs/packs-contract.md`（契约 v1.0.1，本轮未 bump）
+  - `docs/current-stage.md`（阶段 2 交付统计更新）
+- **结论**：✅ 阶段 2 P1/P2 修复清零，可提交进入阶段 3

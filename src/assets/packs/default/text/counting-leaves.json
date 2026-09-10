@@ -1,25 +1,27 @@
 {
-  "type": "counting_leaves",
-  "slots": {
-    "title": { "mode": "fixed", "default": "{pet_name} 在数叶子" },
-    "body": {
-      "mode": "template",
-      "variants": {
-        "daily": [
-          "{pet_name} 数了 {count} 片叶子。",
-          "数到 {count} 片，就没数了。"
-        ],
-        "poetic": [
-          "{count} 片叶子，够 {pet_name} 数到发呆。",
-          "风把 {count} 片叶子放在 {pet_name} 面前。"
-        ]
-      },
-      "poetic_ratio": 0.10
+  "title": { "mode": "fixed", "default": "{pet_name}" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "树叶落了一地，我数到 {count} 片就晕了",
+        "今天风大，数到第 {count} 片时被吹走了重来",
+        "数到 {count} 片就停，剩下的明天再说",
+        "{pet_name} 今天在数叶子，数到 {count} 就放弃了",
+        "我把数到 {count} 的叶子摆成一排给你看",
+        "{count} 片叶子飘过窗前，一片都没等我",
+        "从早数到晚，一共 {count} 片，我有点自豪",
+        "数到一半打了个喷嚏，{count} 片的记录就此作罢"
+      ],
+      "poetic": [
+        "{count} 片叶子是秋天的信，我逐字读完才回头",
+        "它们落下来的样子很像 {recall_line}",
+        "我把 {count} 片叶子叠在一起，就够写一封薄薄的信了"
+      ]
     },
-    "sign_off": { "mode": "template", "variants": ["— {pet_name}"] }
+    "poetic_ratio": 0.1
   },
-  "assets": { "icon": "images/icons/leaves.svg" },
-  "highlight": { "memory_refs": true, "anchor_style": "underline" },
-  "recall_required": ["pet_name"],
+  "sign_off": { "mode": "fixed", "default": "—— {pet_name}" },
+  "recall_required": ["time_anchor"],
   "recall_min_count": 0
 }

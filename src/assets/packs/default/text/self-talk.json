@@ -1,26 +1,27 @@
 {
-  "type": "self_talk",
-  "slots": {
-    "title": { "mode": "fixed", "default": "{pet_name} 自言自语" },
-    "body": {
-      "mode": "template",
-      "variants": {
-        "daily": [
-          "{pet_name}：今天天气不错。",
-          "{pet_name}：想出去走走。",
-          "{pet_name}：{recall_line}"
-        ],
-        "poetic": [
-          "{pet_name} 小声对自己说：{recall_line}",
-          "今天，{pet_name} 在想一些没什么的事。"
-        ]
-      },
-      "poetic_ratio": 0.10
+  "title": { "mode": "fixed", "default": "{pet_name}" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "今天有点困，想你了",
+        "雨停了半小时，我抬头看了看天就继续睡了",
+        "刚才 {recall_line}，想起来就发笑了",
+        "{pet_name} 今天有点懒，什么也没干",
+        "你上次来是哪天？我数着日子呢",
+        "今天没什么事，就想跟你闲聊一会儿",
+        "窗台上的光斑挪了位，我跟着挪了挪",
+        "想你了，但没说出口，自己念叨了一遍"
+      ],
+      "poetic": [
+        "我把 {recall_line} 折成小纸片塞进风里",
+        "今天的光是旧的，像我第一次看见你那天",
+        "如果想念有重量，我今天大概要压弯屋顶"
+      ]
     },
-    "sign_off": { "mode": "template", "variants": ["— {pet_name}"] }
+    "poetic_ratio": 0.1
   },
-  "assets": { "icon": "images/icons/self-talk.svg" },
-  "highlight": { "memory_refs": true, "anchor_style": "underline" },
-  "recall_required": ["pet_name", "time_anchor"],
+  "sign_off": { "mode": "fixed", "default": "—— {pet_name}" },
+  "recall_required": ["time_anchor", "pet_name"],
   "recall_min_count": 0
 }

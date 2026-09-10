@@ -91,10 +91,10 @@ npm run build     # 生产构建
 
 ## 参与共建
 
-欢迎共创者加入：
+欢迎共创者加入——先从 [`CONTRIBUTING.md`](CONTRIBUTING.md) 开始：里面有可认领任务清单（`good first issue` / `help wanted`）、硬性规范与质量门槛。
 
-- **想参与核心开发？** 读 `docs/dev-stage-plan.md`，认领未完成阶段，先开 issue 沟通。
-- **想贡献素材包？** 素材包契约将在阶段 2 冻结（`docs/packs-contract.md`）——一套 pack 就是 JSON + CSS + 图片，不写代码也能给宠物换风格。
+- **想参与核心开发？** 读 `CONTRIBUTING.md` 和 `docs/dev-stage-plan.md`，认领未完成阶段，先开 issue 沟通。
+- **想贡献素材包？** 素材包契约已冻结（v1.0.1，`docs/packs-contract.md`）——一套 pack 就是 JSON + CSS + 图片，不写代码也能给宠物换风格。
 - **发现 bug？** 开 issue，附上复现步骤与 `logs/` 下相关日志行。
 
 路线图（不在 MVP 范围）：Live2D 表现、AI 对话、明信片生成、插件市场、货币/市场、多中心联邦。

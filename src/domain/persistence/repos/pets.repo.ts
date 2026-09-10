@@ -117,3 +117,29 @@ export async function touchUserActivity(petId: string, ts: number = Date.now()):
     [ts, ts, Date.now(), petId]
   );
 }
+
+/**
+ * 持久化 pet 的 FSM 状态（阶段 2 P1-001 修复）
+ *
+ * 语义：
+ *   - 事件生成器把 FSM 动作应用到 pet 后，engine 返回 nextState；
+ *   - route 层调用本函数把新状态落库，避免 FSM 转换只活一次 HTTP 调用；
+ *   - state_since 记录状态最近一次变更的时间（UTC ms）。
+ *
+ * 说明：
+ *   - 本函数不做合法性校验；调用方（engine/route）应先用 isLegalAction 判定。
+ *   - 若 state 未变（no_op 或非法动作），调用方可以选择跳过本调用以节省一次写库。
+ */
+export async function updateState(
+  petId: string,
+  state: PetState,
+  stateSince: number,
+  ts: number = Date.now()
+): Promise<void> {
+  const pool = getPool();
+  await execute(
+    pool,
+    "UPDATE pets SET state = ?, state_since = ?, updated_at = ? WHERE id = ?",
+    [state, stateSince, ts, petId]
+  );
+}

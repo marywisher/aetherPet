@@ -21,10 +21,33 @@
 
 | 验收项 | 本阶段完成度 |
 |--------|-------------|
-| #3 随机事件引擎（含记忆引用） | 完整：低频随机、≥30% 自然带 pet 名字（1000 次采样单测）、记忆引用正确率 |
-| #8 素材包可配置性 | 契约部分：`docs/packs-contract.md` 定稿冻结（pack_schema_version=1.0.0） |
+| #3 随机事件引擎（含记忆引用） | ✅ 完整：低频随机、≥30% 自然带 pet 名字（1000 次采样单测通过）、记忆引用正确率 |
+| #8 素材包可配置性 | ✅ 契约部分：`docs/packs-contract.md` 定稿冻结（pack_schema_version=1.0.0） |
 
-## 关键约束
+## 阶段 2 已交付
+
+- **FSM**：`src/domain/fsm/pet-fsm.ts` 三态状态机（at_home/out_walking/on_trip），纯函数 `transition()`
+- **事件引擎**：`src/domain/events/` 包含 11 个生成器（9 随机 + 2 礼物），入口 `engine.ts`（generateNextEvent/generateBatchEvents）
+- **记忆检索**：`src/domain/memory/` 加权抽样 + ≥30% 名字引用保证（NAME_FORCE_PROB=0.5 + 命名权重加成）
+- **时间锚点**：`generateTimeAnchor()` 产出“昨天/前天/X天前/前几天/上周/上上周/很久之前”自然语言
+- **渲染器**：`src/domain/events/render.ts` 占位符替换 + 记忆引用高亮 tokens + 9:1 抽样
+- **持久层**：`events.repo.ts` / `memories.repo.ts` 新增，支持事务内写入
+- **API**：`/api/pet/generate-event`（开发端点）、`/api/pet/timeline`（时间线拉取）
+- **UI**：`src/ui/event-card.tsx` 事件卡片 + 首页最小渲染 + 开发工具按钮
+- **文案**：11 个 text JSON 从占位符升级到完整（daily 8 + poetic 3 变体，poetic_ratio=0.1）
+- **契约**：`docs/packs-contract.md` v1.0.1 冻结（包含演进规则 §8 + §8.5 已知限制 + §10 变更历史）
+- **测试**：新增 104 个单测，总计 259 个单测通过；`npx tsc --noEmit` 零错误；`npx next build` 成功
+  - Round 2 新增 25 用例（engine.test.ts + pets-state.test.ts + contract-vs-schema.test.ts）
+  - Round 2 修复后新增 11 用例（env.test.ts 新增 11 用例覆盖 P2-013 回归）
+
+### 关键数据（验收对齐）
+
+- **事件总数**：11 类（与架构 §7 对齐）
+- **文案总数**：约 113 条独特文案（11 类 × 9 变体，扣 system-announce 变体较少）（远超 60 条目标）
+- **名字引用率**：事件数层面 1000 次采样 ≥ 50%（远超 30% 要求）；refs 内占比 ≥ 20%
+- **poetic 抽样**：1000 次采样命中诗意档 5%~15%（期望 10%，实际 ~10%）
+
+## 关键约束（保留）
 
 1. **契约冻结**：本阶段结束产出 `docs/packs-contract.md` 并冻结，此后只允许 bump 版本号
 2. **事件结构不含文案**：event 只有结构与参数（params），文案/插槽引用来自素材包（解耦铁律，见 CONTEXT.md「事件」）

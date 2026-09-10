@@ -91,10 +91,10 @@ Use in code: `import { createLogger } from "@/lib/logger"; const l = createLogge
 
 ## Contributing
 
-We welcome co-creators:
+We welcome co-creators — start with [`CONTRIBUTING.md`](CONTRIBUTING.md) for task list (`good first issue` / `help wanted`), conventions and quality gates.
 
-- **Want to join the core dev?** Read `docs/dev-stage-plan.md`, pick an unfinished stage, open an issue to coordinate.
-- **Want to contribute a theme/voice pack?** The pack contract is frozen at stage 2 (`docs/packs-contract.md`) — a pack is just JSON + CSS + images. You can reskin the pet without touching code.
+- **Want to join the core dev?** Read `CONTRIBUTING.md` and `docs/dev-stage-plan.md`, pick an unfinished stage, open an issue to coordinate.
+- **Want to contribute a theme/voice pack?** The pack contract is frozen at v1.0.1 (`docs/packs-contract.md`) — a pack is just JSON + CSS + images. You can reskin the pet without touching code.
 - **Found a bug?** Open an issue with the reproduction steps and the relevant log line from `logs/`.
 
 Roadmap (not in MVP): Live2D expression, AI dialogue, generated postcards, plugin marketplace, currency/market, multi-hub federation.

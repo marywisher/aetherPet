@@ -1,25 +1,27 @@
 {
-  "type": "offer_received",
-  "slots": {
-    "title": { "mode": "fixed", "default": "{pet_name} 收下了" },
-    "body": {
-      "mode": "template",
-      "variants": {
-        "daily": [
-          "{pet_name} 收到了 {item}。",
-          "你把 {item} 放在桌上，{pet_name} 看见了。"
-        ],
-        "poetic": [
-          "{item}，{pet_name} 收下了。",
-          "桌上多了一份心意。"
-        ]
-      },
-      "poetic_ratio": 0.10
+  "title": { "mode": "fixed", "default": "{pet_name}" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "你把 {item} 放在桌上，我看到了",
+        "收到 {item} 了，很惊喜",
+        "{item} 放在门口，我第一眼就注意到了",
+        "{pet_name} 收到 {item}，谢谢你来过",
+        "你把 {item} 放下就跑，我追了两步才够到",
+        "看到 {item} 我就知道是你",
+        "{item} 还带着你家的味道",
+        "收下 {item} 了，明天见"
+      ],
+      "poetic": [
+        "你把 {item} 留在门口，我把它揣在怀里",
+        "{item} 上还有你的温度",
+        "你来过的痕迹是 {item}"
+      ]
     },
-    "sign_off": { "mode": "template", "variants": ["— {pet_name}"] }
+    "poetic_ratio": 0.1
   },
-  "assets": { "icon": "images/icons/offer.svg" },
-  "highlight": { "memory_refs": true, "anchor_style": "underline" },
-  "recall_required": ["pet_name", "item_name"],
+  "sign_off": { "mode": "fixed", "default": "—— {pet_name}" },
+  "recall_required": ["item_name", "pet_name", "time_anchor"],
   "recall_min_count": 1
 }

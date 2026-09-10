@@ -72,7 +72,9 @@ describe("loader（加载官方默认素材包）", () => {
     if (result.ok) {
       expect(result.data.contentType).toBe("application/json");
       const parsed = JSON.parse(result.data.content.toString());
-      expect(parsed).toHaveProperty("slots");
+      // 阶段 2 文本 JSON 契约（见 docs/packs-contract.md §3）使用 title/body/sign_off 顶层字段
+      expect(parsed).toHaveProperty("body");
+      expect(parsed.body).toHaveProperty("variants");
     }
   });
 
