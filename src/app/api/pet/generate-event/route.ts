@@ -56,8 +56,6 @@ function isDevEndpointEnabled(env: { NODE_ENV?: string; ENABLE_DEV_ENDPOINTS?: b
   return env.ENABLE_DEV_ENDPOINTS === true;
 }
 
-type NextJson = (body: unknown, init?: ResponseInit) => NextResponse;
-
 export async function POST(req: Request): Promise<NextResponse> {
   const env = getEnv();
 

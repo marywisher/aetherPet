@@ -19,7 +19,7 @@ import {
   planMute,
   MUTE_DEFAULT_DURATION_MS,
 } from "@/domain/announce/hub";
-import { buildAggregation, BACKFILL_THRESHOLD_MS } from "@/domain/announce/backfill";
+import { buildAggregation } from "@/domain/announce/backfill";
 import type {
   Announcement,
   UserAnnouncementRead,

@@ -8,7 +8,7 @@
  */
 
 import { getPool } from "../db";
-import { query, queryOne, execute, connExecute, connQuery } from "../sql";
+import { query, queryOne, execute, connExecute } from "../sql";
 import type { PoolConnection } from "mysql2/promise";
 import type { Event } from "../../types";
 

@@ -23,7 +23,6 @@
 
 import { withTransaction } from "../persistence/db";
 import {
-  findById as findEventById,
   insert as insertEvent,
   findByPetAndType,
 } from "../persistence/repos/events.repo";
@@ -32,7 +31,6 @@ import {
   markReplyClearedInTx,
 } from "../persistence/repos/pets.repo";
 import {
-  insert as insertMemory,
   findByPetId as findMemories,
   findByPetAndKind,
 } from "../persistence/repos/memories.repo";

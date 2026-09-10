@@ -58,10 +58,14 @@ export type EventGenerator = (
 
 /** 事件类型 → 生成器 注册表（由 templates.ts 聚合）
  * 说明：不同生成器对 ctx 有额外字段要求（如 gift_event_id），
- *       为了兼容异类参数，此 registry 接受可变参数函数 */
+ *       为了兼容异类参数，此 registry 接受可变参数函数。
+ *       异构函数签名的注册表无法用类型系统精确表达（参数逆变会拒绝所有具体 ctx 子类型），
+ *       这里保留 any 是刻意的边界豁免——调用侧在 engine.ts 统一按 EventContext 形态构造入参。 */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type GeneratorRegistry = Partial<
   Record<EventTypeValue, (...args: any[]) => GeneratedEvent>
 >;
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 /** 引擎产出：事件 + 应用后 pet 的新状态 */
 export interface EngineOutput {

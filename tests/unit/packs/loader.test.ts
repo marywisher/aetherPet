@@ -6,7 +6,6 @@
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
-import path from "path";
 import { loadPacks, loadPackByName, readPackFile, _resetPacksCache } from "@/domain/packs/loader";
 
 describe("loader（加载官方默认素材包）", () => {

@@ -68,7 +68,11 @@ function LettersInner() {
   }, [router]);
 
   useEffect(() => {
-    void load();
+    // 微任务延迟：避免 effect 同步 tick 内 setState（react-hooks/set-state-in-effect）
+    const t = setTimeout(() => {
+      void load();
+    }, 0);
+    return () => clearTimeout(t);
   }, [load]);
 
   if (!data && loading) {

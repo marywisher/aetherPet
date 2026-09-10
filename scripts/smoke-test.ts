@@ -15,12 +15,6 @@
  *   - CI 中通过临时 MySQL 容器提供真库，跑全量
  */
 
-import { fileURLToPath } from "url";
-import path from "path";
-
-const here = path.dirname(fileURLToPath(import.meta.url));
-const projectRoot = path.join(here, "..");
-
 const args = process.argv.slice(2);
 const skipDb = args.includes("--skip-db");
 const serverUrl = args.includes("--server")

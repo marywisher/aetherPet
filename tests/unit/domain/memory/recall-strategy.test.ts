@@ -10,7 +10,6 @@
 import { describe, it, expect } from "vitest";
 import {
   recallFromMemories,
-  NAME_FORCE_PROB,
   DEFAULT_MAX_REFS,
 } from "@/domain/memory/recall-strategy";
 import { recallForPet } from "@/domain/memory";
@@ -18,8 +17,6 @@ import { seededRng } from "@/domain/events/rng";
 import { pickOne } from "@/domain/events/rng";
 import type { Memory, EventTypeValue } from "@/domain/types";
 import { GENERATORS, RANDOM_TYPES } from "@/domain/events/templates";
-import { ENGINE_VERSION, SCHEMA_VERSION, PACK_SCHEMA_VERSION } from "@/domain/events/types";
-import { ulid as newUlid } from "ulid";
 
 const TS = 1746000000000;
 

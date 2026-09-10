@@ -46,7 +46,6 @@ describe.skipIf(!IS_INTEGRATION)("API 集成：导出/导入/素材包激活（�
     const { insert: insertPet } = await import("@/domain/persistence/repos/pets.repo");
     const { issueToken } = await import("@/domain/auth/token");
     const { newId } = await import("@/domain/util/ulid");
-    const pool = getPool();
 
     const emailHash = `itest-${new Date().getTime()}-${newId()}`;
     const userId = newId();

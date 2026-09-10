@@ -18,7 +18,7 @@
  *   - 事务参数 conn 是必需的（业务侧通过 withTransaction 包裹）
  */
 
-import { query, queryOne, execute, connQuery, connQueryOne, connExecute } from "../sql";
+import { query, queryOne, connQuery, connQueryOne, connExecute } from "../sql";
 import type { PoolConnection } from "mysql2/promise";
 import type { UserAnnouncementRead } from "../../announce/types";
 import { getPool } from "../db";

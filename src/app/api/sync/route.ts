@@ -34,7 +34,6 @@ import { executeCatchUp } from "@/domain/catchup/executor";
 import { computeBackoff } from "@/domain/backoff/scheduler";
 import { grantDailyItem } from "@/domain/gift/daily-grant";
 import { checkAndGenerateReply } from "@/domain/gift/reply";
-import { toLocalDateStr } from "@/domain/util/date";
 import { renderEvent, type TextSlotTemplate } from "@/domain/events/render";
 import { loadPackByName } from "@/domain/packs/loader";
 import { buildAnnouncePlaceholderMap, withAnnouncePlaceholders } from "@/lib/render-announce";

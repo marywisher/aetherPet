@@ -16,8 +16,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { getEnv } from "@/config/env";
 import { PackManifestSchema, isPackSchemaVersionSupported } from "./manifest-schema";
-import { EMPTY_PACK_MANIFEST } from "./fallback";
-import type { PackManifest, LoadedPack, FallbackReason } from "../types";
+import type { PackManifest, LoadedPack } from "../types";
 
 /**
  * P2-008：静态锚定项目根目录。
@@ -38,17 +37,6 @@ const IMAGE_MIME: Record<string, string> = {
   ".webp": "image/webp",
   ".svg": "image/svg+xml",
   ".gif": "image/gif",
-};
-
-const AUDIO_MIME: Record<string, string> = {
-  ".ogg": "audio/ogg",
-  ".mp3": "audio/mpeg",
-  ".wav": "audio/wav",
-};
-
-const CONTENT_MIME: Record<string, string> = {
-  ".css": "text/css",
-  ".json": "application/json",
 };
 
 let _packsCache: LoadedPack[] | null = null;
@@ -219,8 +207,6 @@ export async function readPackFile(
   }
 
   const packDir = pack.path;
-  let relPath: string;
-  let contentType: string;
 
   if (category === "image") {
     // 优先通过 asset key 查找（如 home_bg）
@@ -255,7 +241,7 @@ export async function readPackFile(
     }
     // 通过文件名查找 manifest.texts 中的值
     let relPath: string | undefined;
-    for (const [key, val] of Object.entries(pack.manifest?.texts || {})) {
+    for (const [, val] of Object.entries(pack.manifest?.texts || {})) {
       if (val.endsWith(fileName) || val.endsWith(`/${fileName}`)) {
         relPath = val;
         break;

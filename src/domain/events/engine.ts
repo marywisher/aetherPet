@@ -103,10 +103,10 @@ export function generateNextEvent(
 
   // 若调用方传了 generatorInput，与 ctx 合并
   const mergedCtx = opts.generatorInput
-    ? ({ ...ctx, ...opts.generatorInput } as any)
+    ? ({ ...ctx, ...opts.generatorInput } as EventContext & Record<string, unknown>)
     : ctx;
 
-  const { event, fsmAction } = (generator as (c: any) => GeneratedEvent)(mergedCtx);
+  const { event, fsmAction } = (generator as (c: unknown) => GeneratedEvent)(mergedCtx);
 
   const { state: nextState, stateSince: nextStateSince } = transition(
     pet.state,

@@ -10,7 +10,6 @@
  */
 
 import type { Event, MemoryRef, Rng } from "./types";
-import { pickOne } from "./rng";
 
 /** 素材包 JSON 中 body.variants 的类型 */
 export interface TextSlotTemplate {
@@ -44,8 +43,6 @@ export interface RenderedText {
   /** 抽到的档位（用于调试） */
   variantTier: "daily" | "poetic";
 }
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 function formatSpanDays(spanDays: number): string {
   if (spanDays < 1) return "0 天";

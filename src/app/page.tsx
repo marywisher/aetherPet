@@ -98,7 +98,11 @@ function HomeInner() {
   }, [router]);
 
   useEffect(() => {
-    void load();
+    // 微任务延迟：避免 effect 同步 tick 内 setState（react-hooks/set-state-in-effect）
+    const t = setTimeout(() => {
+      void load();
+    }, 0);
+    return () => clearTimeout(t);
   }, [load]);
 
   const generateEvent = async (type?: EventTypeValue) => {
@@ -188,7 +192,7 @@ function HomeInner() {
         )}
         {events.length === 0 ? (
           <div className="text-sm p-6 text-center rounded-lg" style={{ color: "var(--muted)", background: "var(--pack-paper)" }}>
-            还没有事件。点击"触发一次随机事件"生成。
+            还没有事件。点击「触发一次随机事件」生成。
           </div>
         ) : (
           events.map((it) => (

@@ -15,13 +15,11 @@
  *   - 事件计数摘要
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ThemeProvider, useTheme } from "@/ui/theme-provider";
 import type { Inventory, Memory, PetState } from "@/domain/types";
-
-type ProfileState = PetState | null;
 
 interface ProfileResponse {
   ok: boolean;
@@ -111,18 +109,12 @@ function ProfileInner() {
   }, [router]);
 
   useEffect(() => {
-    void load();
+    // 微任务延迟：避免 effect 同步 tick 内 setState（react-hooks/set-state-in-effect）
+    const t = setTimeout(() => {
+      void load();
+    }, 0);
+    return () => clearTimeout(t);
   }, [load]);
-
-  const memoriesByKind = useMemo(() => {
-    const map = new Map<string, Memory[]>();
-    for (const m of data?.memories ?? []) {
-      const arr = map.get(m.kind) ?? [];
-      arr.push(m);
-      map.set(m.kind, arr);
-    }
-    return map;
-  }, [data]);
 
   if (!data && loading) {
     return (

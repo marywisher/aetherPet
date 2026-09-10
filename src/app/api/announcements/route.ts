@@ -119,7 +119,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return handleMute(auth.userId, body.count ?? 0, body.muteDurationMs, now, hubId);
     }
     case "unmute": {
-      return handleUnmute(auth.userId, body.ids ?? [], now);
+      return handleUnmute(auth.userId, body.ids ?? []);
     }
     default:
       return NextResponse.json(
@@ -212,8 +212,7 @@ async function handleMute(
 
 async function handleUnmute(
   userId: string,
-  ids: unknown,
-  _now: number
+  ids: unknown
 ): Promise<NextResponse> {
   if (!validateIds(ids) || ids.length === 0) {
     return NextResponse.json({ ok: true, action: "unmute", unmuted: 0 });

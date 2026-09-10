@@ -495,3 +495,34 @@ admin 发布走单事务（公告 + 全 pet 事件一起落，失败整体回滚
 **标签**：`流程`
 
 **状态**：`已闭环`
+
+---
+
+### [2026-09-10] 收官后补：基线 lint 债清零——测试目录 any 用「豁免」而非「清除」
+
+**阶段**：最终确认（收官后清理）
+
+**问题描述**：
+收官时 src/ 有 19 errors + 24 warnings（阶段 1-5 遗留），测试目录还有 55 个 no-explicit-any + prefer-const 等。
+清理后发现两类性质完全不同：生产代码的债必须真修（未用 import、setState-in-effect、泛型默认 any），
+测试代码的债（vi.fn mock 的 (...args: any[]) 转发、断言边缘 as any）是「测试惯用法」，硬塞类型系统只会生产噪音转型。
+
+**根因分析**：
+「lint 清零」不能一刀切：测试 mock 转发签名本就该宽松，用 unknown 会破坏生成器等异构注册表的类型兼容
+（参数逆变拒绝所有子类型）——强改会造成比债更丑的 as 断言链。
+
+**修复方案**：
+- 生产 src/：**真修**——删 20+ 未用 import/变量、6 处 setState-in-effect 改微任务延迟、page.tsx 未转义引号；
+  泛型默认 `any→unknown`（Row/query/findOne 等）、GeneratorRegistry 保留 any 但加 eslint-disable 注释豁免
+  （异构注册表是类型系统边界，注释说明原因）
+- 测试 tests/：eslint.config.mjs 对 tests/** 关 no-explicit-any（注释理由：mock 边缘类型豁免，无生产风险）
+- coverage/ 加入 eslint globalIgnores（产物目录）
+- 结果：`npm run lint` 从 120 problems → **0 problems**；tsc/tests/build 全绿
+
+**预防措施**：
+- lint 债分两类处理：生产代码真修，测试代码用「带注释的规则豁免」——豁免要写明原因，避免变成无脑关规则
+- 0 problems 后 CI 可恢复 `npm run lint` 全量（不再是 eslint src 限定）
+
+**标签**：`流程` / `技术`
+
+**状态**：`已闭环`

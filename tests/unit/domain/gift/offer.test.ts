@@ -17,7 +17,7 @@ const mockFindInventoryById = vi.fn();
 const mockMarkOfferedInTx = vi.fn();
 vi.mock("@/domain/persistence/repos/inventory.repo", () => ({
   findById: (...args: unknown[]) => mockFindInventoryById(...args),
-  findUnofferedByUser: (...args: unknown[]) => vi.fn().mockResolvedValue([]),
+  findUnofferedByUser: () => vi.fn().mockResolvedValue([]),
   markOfferedInTx: (...args: unknown[]) => mockMarkOfferedInTx(...args),
 }));
 

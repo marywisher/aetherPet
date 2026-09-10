@@ -8,17 +8,17 @@
  *   - 数组/JSON 参数需先 JSON.stringify，本模块不做自动序列化
  */
 
-import type { Pool, RowDataPacket, ResultSetHeader, PoolConnection, ExecuteValues } from "mysql2/promise";
+import type { Pool, ResultSetHeader, PoolConnection, ExecuteValues } from "mysql2/promise";
 
-export type Row<T = any> = T;
-export type Rows<T = any> = T[];
+export type Row<T = unknown> = T;
+export type Rows<T = unknown> = T[];
 export type InsertResult = ResultSetHeader;
 
 /** 参数类型 */
 export type Params = ExecuteValues;
 
 /** 执行 SELECT，返回行列表 */
-export async function query<T = any>(
+export async function query<T = unknown>(
   pool: Pool,
   sql: string,
   params: Params = []
@@ -28,7 +28,7 @@ export async function query<T = any>(
 }
 
 /** 执行 SELECT 单行 */
-export async function queryOne<T = any>(
+export async function queryOne<T = unknown>(
   pool: Pool,
   sql: string,
   params: Params = []
@@ -56,7 +56,7 @@ export async function getConnection(pool: Pool): Promise<PoolConnection> {
 }
 
 /** 事务内查询 */
-export async function connQuery<T = any>(
+export async function connQuery<T = unknown>(
   conn: PoolConnection,
   sql: string,
   params: Params = []
@@ -65,7 +65,7 @@ export async function connQuery<T = any>(
   return rows as T[];
 }
 
-export async function connQueryOne<T = any>(
+export async function connQueryOne<T = unknown>(
   conn: PoolConnection,
   sql: string,
   params: Params = []

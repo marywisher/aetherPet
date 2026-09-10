@@ -56,7 +56,8 @@ describe("manifest-schema", () => {
   });
 
   it("缺失必填字段时拒绝", () => {
-    const { display_name, ...rest } = VALID_MANIFEST;
+    const rest: Record<string, unknown> = { ...VALID_MANIFEST };
+    delete rest.display_name;
     const result = PackManifestSchema.safeParse(rest as never);
     expect(result.success).toBe(false);
   });

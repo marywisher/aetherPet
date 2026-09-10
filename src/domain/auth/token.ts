@@ -8,7 +8,6 @@
  *   - 30 天有效，退出登录写 revoked_at
  */
 
-import crypto from "crypto";
 import type { PoolConnection } from "mysql2/promise";
 import { getEnv } from "@/config/env";
 import { newId } from "../util/ulid";

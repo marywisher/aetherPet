@@ -5,7 +5,7 @@
  */
 
 import { getPool } from "../db";
-import { query, queryOne, execute, connQueryOne, connExecute } from "../sql";
+import { queryOne, execute, connQueryOne, connExecute } from "../sql";
 import type { PoolConnection } from "mysql2/promise";
 import type { User } from "../../types";
 

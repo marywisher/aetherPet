@@ -92,7 +92,7 @@ export async function withTransaction<T>(
 }
 
 /** 简化 SELECT 单行 */
-export async function findOne<T = any>(
+export async function findOne<T = unknown>(
   sqlText: string,
   params: sql.Params = []
 ): Promise<T | null> {
@@ -100,7 +100,7 @@ export async function findOne<T = any>(
 }
 
 /** 简化 SELECT 多行 */
-export async function findMany<T = any>(
+export async function findMany<T = unknown>(
   sqlText: string,
   params: sql.Params = []
 ): Promise<T[]> {

@@ -26,7 +26,7 @@ const mockFindMemoriesByPetAndKind = vi.fn();
 vi.mock("@/domain/persistence/repos/memories.repo", () => ({
   findByPetId: (...args: unknown[]) => mockFindMemoriesByPetId(...args),
   findByPetAndKind: (...args: unknown[]) => mockFindMemoriesByPetAndKind(...args),
-  insert: (...args: unknown[]) => vi.fn().mockResolvedValue(undefined),
+  insert: () => vi.fn().mockResolvedValue(undefined),
 }));
 
 const mockFindEventsByPetAndType = vi.fn();
@@ -34,7 +34,7 @@ const mockInsertEvent = vi.fn();
 vi.mock("@/domain/persistence/repos/events.repo", () => ({
   findByPetAndType: (...args: unknown[]) => mockFindEventsByPetAndType(...args),
   insert: (...args: unknown[]) => mockInsertEvent(...args),
-  findById: (...args: unknown[]) => vi.fn().mockResolvedValue(null),
+  findById: () => vi.fn().mockResolvedValue(null),
 }));
 
 import { checkAndGenerateReply, isReplyDue } from "@/domain/gift/reply";

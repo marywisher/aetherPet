@@ -13,7 +13,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { findByUserId, findById as findPetById } from "@/domain/persistence/repos/pets.repo";
+import { findByUserId } from "@/domain/persistence/repos/pets.repo";
 import { findById as findUserById } from "@/domain/persistence/repos/users.repo";
 import { findByPetId as findMemoriesByPetId } from "@/domain/persistence/repos/memories.repo";
 import { findOfferedByPet } from "@/domain/persistence/repos/inventory.repo";

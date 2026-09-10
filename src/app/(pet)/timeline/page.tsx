@@ -79,7 +79,11 @@ function TimelineInner() {
   );
 
   useEffect(() => {
-    void load(page, pageSize);
+    // 微任务延迟：避免 effect 同步 tick 内 setState（react-hooks/set-state-in-effect）
+    const t = setTimeout(() => {
+      void load(page, pageSize);
+    }, 0);
+    return () => clearTimeout(t);
   }, [page, pageSize, load]);
 
   if (!data && loading) {

@@ -35,7 +35,7 @@ describe("pets.repo.updateState（阶段 2 Round 2 · P1-001）", () => {
     await updateState(petId, newState, newStateSince, ts);
 
     expect(execute).toHaveBeenCalledTimes(1);
-    const [_, sql, params] = (execute as any).mock.calls[0];
+    const [, sql, params] = (execute as any).mock.calls[0];
     expect(sql).toContain("UPDATE pets");
     expect(sql).toContain("state = ?");
     expect(sql).toContain("state_since = ?");

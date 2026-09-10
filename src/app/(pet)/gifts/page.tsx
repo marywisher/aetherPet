@@ -19,7 +19,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ThemeProvider, useTheme } from "@/ui/theme-provider";
 import { GiftTray } from "@/ui/gift-tray";
-import type { Inventory, Item, PetState } from "@/domain/types";
+import type { Inventory, Item } from "@/domain/types";
 
 interface InventoryResponse {
   ok: boolean;
@@ -80,7 +80,11 @@ function GiftsInner() {
   }, [router]);
 
   useEffect(() => {
-    void load();
+    // 微任务延迟：避免 effect 同步 tick 内 setState（react-hooks/set-state-in-effect）
+    const t = setTimeout(() => {
+      void load();
+    }, 0);
+    return () => clearTimeout(t);
   }, [load]);
 
   const itemsCatalog = useMemo(() => {

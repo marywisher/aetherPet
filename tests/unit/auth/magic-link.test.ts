@@ -290,18 +290,15 @@ describe("magic-link", () => {
         hubId: "local",
       });
       usersRepo.findByEmailHash.mockResolvedValue(null);
-      let order: string[] = [];
-      const origWithTxn = db.withTransaction;
+      const order: string[] = [];
       db.withTransaction.mockImplementation(async (fn: any) => {
         // 确认 conn 已传入回调
         const fakeConn = { __isTxnConn: true };
         return fn(fakeConn);
       });
-      const origMarkUsed = vcRepo.markUsed.mock;
       vcRepo.markUsed.mockImplementation(async () => {
         order.push("markUsed");
       });
-      const origInsert = usersRepo.insert.mock;
       usersRepo.insert.mockImplementation(async () => {
         order.push("users.insert");
         return {
@@ -318,7 +315,6 @@ describe("magic-link", () => {
           hubId: "local",
         };
       });
-      const origSessionsInsert = sessionsRepo.insert.mock;
       sessionsRepo.insert.mockImplementation(async () => {
         order.push("sessions.insert");
         return {

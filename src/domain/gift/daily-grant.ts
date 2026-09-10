@@ -35,7 +35,7 @@ import { generateDailyGrant } from "../events/generators/daily-grant";
 import { newId } from "../util/ulid";
 import { toLocalDateStr } from "../util/date";
 import { SEED_ITEMS, pickWithExclusion, type PickResult, type ItemSeed } from "./item-pool";
-import type { Event, Inventory, Memory, Pet } from "../types";
+import type { Event, Inventory, Pet } from "../types";
 import type { Rng } from "../events/types";
 import { findByPetId as findMemories } from "../persistence/repos/memories.repo";
 
