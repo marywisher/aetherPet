@@ -52,6 +52,9 @@ export const envSchema = z.object({
   HUB_ADMIN_EMAIL: z.string().default("admin@example.com"),
   HUB_PRIVACY_URL: z.string().default("https://example.com/privacy"),
   HUB_DOMAIN: z.string().default(""),
+  // 阶段 5：发布公告的独立密钥（admin bearer token）
+  // MVP 阶段没有独立 admin 表，用此密钥校验 admin 请求；生产部署必须改默认值
+  HUB_ADMIN_TOKEN: z.string().default(""),
 
   // ============== 素材包 ==============
   ASSET_PACKS_DIR: z.string().default("./src/assets/packs"),

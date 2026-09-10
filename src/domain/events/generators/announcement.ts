@@ -20,6 +20,10 @@ export interface AnnounceContext extends EventContext {
   announcementBody: string;
 }
 
+// TODO(阶段 6)：接入 system_announce 前必须重构——
+// params 只应存 announcement_id（引用），title/body 由 UI 层反查 announcements 表，
+// 以符合「事件结构不含文案」硬约束（阶段 5 质检 P2-003）；
+// 届时同步评估 packs-contract.md v1.0.1 的 system_announce 插槽描述（可能 bump 到 v1.1.0，需契约评审）。
 export function generateSystemAnnounce(ctx: AnnounceContext): GeneratedEvent {
   const { pet } = ctx;
   // Round 2 P3-001 清理：系统公告不需要随机性，不再提取 ctx.rng

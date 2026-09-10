@@ -112,10 +112,27 @@
 
 ---
 
-### 阶段 5：公告 + 档案页（stage-5）← 当前阶段
+### 阶段 5：公告 + 档案页（stage-5）
+**完成时间**：2026-09-10（待提交，终检建议提交）
+**阶段产出**：
+- `src/domain/announce/`（hub/backfill/types）、`src/domain/backup/backup.ts`（hash 校验）
+- API：/api/announcements（GET+POST：列表/状态/聚合、mark_read/mute/unmute）、/api/announcements/admin（X-Admin-Token/501）、/api/profile
+- UI：/announcements、/(pet)/profile；首页导航补齐
+- 481 单测全过（+48）；build exit 0
+
+**关键决策**：
+1. Round 1 手修 11 项（P0-001 GET 缺失 / P1-001 admin 501 / P1-002 导航 / P2-004-005 / P3×5）；终检独立核验通过
+2. P2-001/P2-002/P2-003（system_announce 接入 + 文案剥离）契约化延后阶段 6
+3. ⚠️ 重复踩坑标记：API 层零集成测试→P0 逃逸（已记 pitfalls，阶段 6 必修）
+
+**遗留问题**：system_announce 接入（含 params 剥离）→ 阶段 6；API 集成测试 → 阶段 6
+
+---
+
+### 阶段 6：导出/导入 + 部署 + 性能冒烟（stage-6）← 当前阶段（收官）
 **开始时间**：2026-09-10
-**前置依赖**：阶段 3（/api/sync、事件流）、阶段 4（储物罐数据）
-**核心内容**：公告中心（发布/已读未读/静音/空窗聚合）、档案页（状态/记忆/历史/储物罐）、last_backup_hash 铺路
+**前置依赖**：阶段 1-5 全部
+**核心内容**：数据导出/导入（数据主权闭环）、开发者模式、宝塔+Docker 双路径部署、SELF_HOST、CI、11 项验收全量回归、阶段 5 遗留闭环
 
 ---
 

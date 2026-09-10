@@ -156,9 +156,20 @@ function HomeInner() {
                 : "旅行中"}
           </p>
         </div>
-        <a href="/settings" className="text-xs underline" style={{ color: "var(--muted)" }}>
-          设置
-        </a>
+        <nav className="flex items-center gap-3">
+          <a href="/profile" className="text-xs underline" style={{ color: "var(--muted)" }}>
+            档案
+          </a>
+          <a href="/announcements" className="text-xs underline" style={{ color: "var(--muted)" }}>
+            公告
+          </a>
+          <a href="/gifts" className="text-xs underline" style={{ color: "var(--muted)" }}>
+            送礼物
+          </a>
+          <a href="/settings" className="text-xs underline" style={{ color: "var(--muted)" }}>
+            设置
+          </a>
+        </nav>
       </header>
 
       <section className="space-y-3">
