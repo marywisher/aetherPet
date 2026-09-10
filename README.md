@@ -28,7 +28,7 @@ aetherPet is designed as **an open ecosystem**, not a closed app:
 | 3 | Catch-up simulation · Backoff · Timeline UI | ✅ done |
 | 4 | Daily gift + reply letter | ✅ done |
 | 5 | Announcements + profile | ✅ done |
-| 6 | Export/import · Deploy · Perf smoke | 🔜 current |
+| 6 | Export/import · Deploy · Perf smoke | ✅ done (2026-09-10) |
 
 See [`docs/dev-stage-plan.md`](docs/dev-stage-plan.md) for the full plan and [`docs/requirements.md`](docs/requirements.md) for the MVP spec. Self-hosting guide: [`docs/SELF_HOST.md`](docs/SELF_HOST.md).
 

@@ -46,3 +46,5 @@ Thumbs.db
 tmp/
 temp/
 *.tmp
+# ---------- 测试覆盖率报告 ----------
+coverage/

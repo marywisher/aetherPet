@@ -28,7 +28,7 @@ aetherPet 被设计为**一个开源生态**，而不是一个封闭应用：
 | 3 | 补算 · 退避 · 时间线 UI | ✅ |
 | 4 | 每日馈赠 + 回信 | ✅ |
 | 5 | 公告 + 档案页 | ✅ |
-| 6 | 导出/导入 · 部署 · 性能冒烟 | 🔜 当前 |
+| 6 | 导出/导入 · 部署 · 性能冒烟 | ✅（2026-09-10 收官） |
 
 完整规划见 [`docs/dev-stage-plan.md`](docs/dev-stage-plan.md)，MVP 规格见 [`docs/requirements.md`](docs/requirements.md)。
 

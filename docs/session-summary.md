@@ -152,15 +152,18 @@
 ---
 
 ## 项目全局状态
-- 当前阶段：阶段 6（代码完成，待提交）
-- 已完成：阶段 1–5（已提交）+ 阶段 6 代码（待提交）
+- 当前阶段：**全部 6 阶段完成（2026-09-10 收官）**，阶段 6 已提交 `f82c357`
+- 完成情况：11/11 验收全量通过（最终验收报告 `reports/final-acceptance.md`）
 - 关键文档索引：
   - `docs/requirements.md` — 需求 + 验收（权威）
   - `docs/architecture.md` / `docs/database-schema.md` — 架构 + MySQL DDL
-  - `docs/dev-stage-plan.md` — 阶段计划 + 验收矩阵
-  - `docs/packs-contract.md` — 事件-素材契约（阶段 2 产出，届时冻结）
-  - `docs/pitfalls.md` — 自学习日志（4 条）
-  - `README.md` / `README.zh-CN.md` — 项目简介
+  - `docs/dev-stage-plan.md` — 阶段计划 + 验收矩阵（7 表全 ✅）
+  - `docs/packs-contract.md` — 事件-素材契约 v1.0.1（冻结）
+  - `docs/SELF_HOST.md` — 自托管部署指南（宝塔 + Docker 双路径）
+  - `docs/pitfalls.md` — 自学习日志（含跨项目可复用清单，收官整理）
+  - `reports/final-acceptance.md` — 11 项验收最终报告
+  - `README.md` / `README.zh-CN.md` — 项目简介（进度全 ✅）
+- 遗留：真 MySQL 集成/E2E 待 CI（GitHub Actions MySQL service 自动补）；基线 lint 债 19 errors（阶段 1-5 遗留）
 
 ## 上下文压缩说明
 > 此摘要由 AI 在阶段转换时自动生成。
