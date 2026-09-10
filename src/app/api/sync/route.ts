@@ -23,9 +23,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { verifyToken } from "@/domain/auth/token";
-import { extractBearerToken } from "@/lib/request-helpers";
-import { findByUserId } from "@/domain/persistence/repos/pets.repo";
+import { requireAuth } from "@/lib/auth";
+import { findByUserId, findById as findPetById, updateNextProactiveTs } from "@/domain/persistence/repos/pets.repo";
 import {
   findByPetId as findEventsByPetId,
   findLatestAggregate,
@@ -33,28 +32,28 @@ import {
 import { planCatchUp } from "@/domain/catchup/planner";
 import { executeCatchUp } from "@/domain/catchup/executor";
 import { computeBackoff } from "@/domain/backoff/scheduler";
+import { grantDailyItem } from "@/domain/gift/daily-grant";
+import { checkAndGenerateReply } from "@/domain/gift/reply";
+import { toLocalDateStr } from "@/domain/util/date";
 import { renderEvent, type TextSlotTemplate } from "@/domain/events/render";
 import { loadPackByName } from "@/domain/packs/loader";
 
 /**
- * 提取 token：Bearer 优先，回退 cookie `aetherpet_token`。
- * 与 /api/pet、/api/pet/timeline 保持同款模式（阶段 2 已冻结）。
+ * 注：P2-004 修复——将本地 resolveToken 副本换成 lib/auth.ts 的 requireAuth，
+ * 消除与 /api/pet/* / /api/gift/* / /api/inventory 的认证双源。
+ * lib/auth.resolveToken 与旧版 resolveToken 实现完全一致（Bearer 优先、回退 cookie）。
  */
-function resolveToken(req: Request): string | null {
-  const reqWithHeaders = req as unknown as import("next/server").NextRequest;
-  const bearer = extractBearerToken(reqWithHeaders);
-  if (bearer) return bearer;
-  const cookies = req.headers.get("cookie") ?? "";
-  const match = cookies.match(/(?:^|;\s*)aetherpet_token=([^;]+)/);
-  return match ? match[1] : null;
-}
 
 export async function GET(req: Request): Promise<NextResponse> {
   // 1) 鉴权
-  const token = resolveToken(req);
-  if (!token) return NextResponse.json({ error: "未登录" }, { status: 401 });
-  const session = await verifyToken(token);
-  if (!session) return NextResponse.json({ error: "登录已过期" }, { status: 401 });
+  const auth = await requireAuth(req);
+  if (!auth.ok) {
+    return NextResponse.json(
+      { error: auth.error === "not_logged_in" ? "未登录" : "登录已过期" },
+      { status: 401 }
+    );
+  }
+  const session = { userId: auth.userId };
 
   // 2) 加载 pet
   const pets = await findByUserId(session.userId);
@@ -65,6 +64,7 @@ export async function GET(req: Request): Promise<NextResponse> {
       catchup: { ran: false, skipped: "no_pet", durationMs: 0, eventCount: 0, aggregated: false },
       backoff: { absenceMs: 0, absenceHours: 0, intervalMs: null, nextProactiveTs: null, isActive: true },
       latestAggregate: null,
+      events: [],
       replyCheck: { ran: false, skipped: "no_pet" },
       dailyGrant: { ran: false, skipped: "no_pet" },
     });
@@ -74,8 +74,6 @@ export async function GET(req: Request): Promise<NextResponse> {
   // 3) 退避计算（纯函数；无论是否补算都要给出结果，供前端"下次主动触达"提示）
   const now = Date.now();
   const backoff = computeBackoff({ userLastActiveTs: pet.userLastActiveTs, now });
-
-  // 4) 补算计划 + 事务执行
   const fromTs = pet.lastActivityTs;
   const toTs = now;
   const plan = planCatchUp({ pet, fromTs, toTs });
@@ -110,6 +108,30 @@ export async function GET(req: Request): Promise<NextResponse> {
     catchupDurationMs = Date.now() - catchupStartedAt;
   }
 
+  // 4b) P1-001 修复：将 backoff.nextProactiveTs 写回 pets 表，
+  //     使 reply.ts::isReplyDue 的 backoff_active 分支在生产环境生效。
+  //     旧实现仅将 nextProactiveTs 返回给客户端，DB 中字段恒为 null，
+  //     导致"离开 3 天 → 退避 7 天"的回信延迟机制形同虚设。
+  //     仅在 nextProactiveTs 非 null（缺席 ≥ 24h）时写库，节省每日登录时的 UPDATE。
+  if (backoff.nextProactiveTs !== null) {
+    try {
+      await updateNextProactiveTs(pet.id, backoff.nextProactiveTs);
+    } catch (err) {
+      // 写失败不阻断同步：只影响退避联动，不影响本次 catchup / reply / grant
+      console.error(`[sync] persist next_proactive_ts failed pet=${pet.id}:`, err);
+    }
+  }
+
+  // 4c) P2-002 修复：catchup 已写入 last_activity_ts / state / user_last_active_ts，
+  //     此处重读 pet 以获取新状态，避免后续时间线/回信/馈赠基于陈旧对象。
+  {
+    const fresh = await findPetById(pet.id);
+    if (fresh) {
+      // 合并新字段到当前 pet 引用（保持后续代码不需要改动变量名）
+      Object.assign(pet, fresh);
+    }
+  }
+
   // 5) 时间线（渲染后返回，前端直接使用）
   const recentEvents = await findEventsByPetId(pet.id, 20);
   const pack = await loadPackByName(pet.activePackName ?? "default");
@@ -130,9 +152,66 @@ export async function GET(req: Request): Promise<NextResponse> {
     };
   }
 
+  // 7) 回信检查（阶段 4）：reply_pending=1 且已到期 → 生成回信（含退避联动）
+  //    失败时不阻断同步，仅记录 skipReason
+  let replyCheckResult: {
+    ran: boolean;
+    generated: boolean;
+    skipped?: string;
+  } = { ran: false, generated: false, skipped: "no_pet" };
+  if (pet.id) {
+    try {
+      const r = await checkAndGenerateReply(pet.id, now);
+      replyCheckResult = {
+        ran: true,
+        generated: r.generated,
+        ...(r.skipReason ? { skipped: r.skipReason } : {}),
+      };
+    } catch (err) {
+      console.error(`[sync] reply check failed pet=${pet.id}:`, err);
+      replyCheckResult = { ran: true, generated: false, skipped: "error" };
+    }
+  }
+
+  // 8) 每日馈赠检查（阶段 4）：今日首次登录自动领取
+  //    失败时不阻断同步，仅记录 skipReason
+  let dailyGrantResult: {
+    ran: boolean;
+    granted: boolean;
+    skipped?: string;
+    fallbackMessage?: string;
+    itemId?: string;
+    itemDisplayName?: string;
+  } = { ran: false, granted: false, skipped: "no_pet" };
+  if (pet.id) {
+    // 回信处理可能已更新 reply_pending / last_reply_at，此处重新读一次 pet，
+    // 避免 grantDailyItem 基于陈旧对象（虽然当前 daily_grant 逻辑只用 dailyGrantLastDate，
+    // 但后续若依赖 pet.state / pet.userLastActiveTs 会产生副作用）
+    const freshForGrant = await findPetById(pet.id);
+    const grantPet = freshForGrant ?? pet;
+    try {
+      const r = await grantDailyItem({ pet: grantPet, now });
+      dailyGrantResult = {
+        ran: true,
+        granted: r.granted,
+        ...(r.skipReason ? { skipped: r.skipReason } : {}),
+        ...(r.fallbackMessage ? { fallbackMessage: r.fallbackMessage } : {}),
+        ...(r.itemId ? { itemId: r.itemId, itemDisplayName: r.itemDisplayName } : {}),
+      };
+    } catch (err) {
+      console.error(`[sync] daily grant failed pet=${pet.id}:`, err);
+      dailyGrantResult = { ran: true, granted: false, skipped: "error" };
+    }
+  }
+
+  // 9) 响应前再次重读 pet，使返回给客户端的 pet 字段包含本次同步中所有写入
+  //    （catchup / reply / grant 修改的字段），避免 P2-002 陈旧对象。
+  const freshForResponse = await findPetById(pet.id);
+  const responsePet = freshForResponse ?? pet;
+
   return NextResponse.json({
     ok: true,
-    pet,
+    pet: responsePet,
     catchup: {
       ran: catchupRan,
       durationMs: catchupDurationMs,
@@ -151,8 +230,7 @@ export async function GET(req: Request): Promise<NextResponse> {
     },
     latestAggregate: latestAggregateRendered,
     events: renderedEvents,
-    // 阶段 4 完整实现；本阶段占位
-    replyCheck: { ran: false, skipped: "stage_4_pending" },
-    dailyGrant: { ran: false, skipped: "stage_4_pending" },
+    replyCheck: replyCheckResult,
+    dailyGrant: dailyGrantResult,
   });
 }

@@ -95,10 +95,27 @@
 
 ---
 
-### 阶段 4：每日馈赠 + 回信（stage-4）← 当前阶段
+### 阶段 4：每日馈赠 + 回信（stage-4）
+**完成时间**：2026-09-10（待提交，终检建议提交）
+**阶段产出**：
+- `src/domain/gift/`（item-pool 9 种/加权/排除重复/空池兜底、daily-grant、offer、reply）、`src/domain/util/date.ts`（UTC+8 同日）
+- repos 扩展（items/inventory/pets）、`002_seed_items.sql`、`src/lib/auth.ts`（requireAuth）
+- API：/api/gift/daily、/api/gift/offer、/api/inventory、/api/letters；UI：/gifts、/letter
+- 433 单测全过；build exit 0
+
+**关键决策**：
+1. 质检 Round 1 抓出 4 个真实 P1（退避字段未持久化/事件字段事务后回填/并发幂等缺失/UI 判定不一致），修复 + 终检确认
+2. 幂等改由 DB 条件 UPDATE + affectedRows 保证（非应用层读判断）
+3. 三条经验已记 pitfalls（跨阶段字段写入方、DB 级幂等、mock 字段需集成验证）
+
+**遗留问题**：P3-002（inventory.consumed_at 语义复用，待阶段 5）；Docker 集成实测（阶段 6 CI）
+
+---
+
+### 阶段 5：公告 + 档案页（stage-5）← 当前阶段
 **开始时间**：2026-09-10
-**前置依赖**：阶段 3（退避调度、/api/sync、回信生成器）
-**核心内容**：物品池 ≥8 种、首次登录奖励、赠送日限一次、24h 回信含记忆引用、物品栏 UI、退避联动
+**前置依赖**：阶段 3（/api/sync、事件流）、阶段 4（储物罐数据）
+**核心内容**：公告中心（发布/已读未读/静音/空窗聚合）、档案页（状态/记忆/历史/储物罐）、last_backup_hash 铺路
 
 ---
 

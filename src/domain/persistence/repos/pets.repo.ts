@@ -163,6 +163,127 @@ export async function updateState(
  * @param stateSince 状态最近一次变更的时间（UTC ms）
  * @param activityTs 同步时间戳（同时写入 last_activity_ts 与 user_last_active_ts）
  */
+/**
+ * 阶段 4：更新每日馈赠日（daily_grant_last_date）
+ * 语义：完成一次 daily_grant 后调用，同一 UTC+8 日期不会再触发领取
+ */
+export async function updateDailyGrantDate(
+  petId: string,
+  date: string,
+  ts: number = Date.now()
+): Promise<void> {
+  const pool = getPool();
+  await execute(
+    pool,
+    "UPDATE pets SET daily_grant_last_date = ?, updated_at = ? WHERE id = ?",
+    [date, ts, petId]
+  );
+}
+
+// 说明：updateDailyGrantDate 是非事务版便捷入口，语义与 updateDailyGrantDateInTx 一致。
+// 生产路径使用 InTx 版本；本函数仅用于测试 / 后台任务。
+
+/**
+ * 事务内：送赠完成后一次性更新 offer 相关字段（阶段 4）。
+ *   - offer_last_date = 今日（日限一次校验）
+ *   - reply_pending = 1
+ *   - reply_due_at = 送赠 ts + 24h（架构 §4.3.2）
+ *
+ * P1-003 修复：条件 WHERE 保证并发幂等——
+ *   WHERE id = ? AND (offer_last_date IS NULL OR offer_last_date < ?)
+ * 返回 affectedRows；为 0 时调用方视为已被并发请求处理，rollback 并返回
+ * already_offered_today。
+ */
+export async function markOfferInTx(
+  conn: import("mysql2/promise").PoolConnection,
+  petId: string,
+  offerDate: string,
+  replyDueAt: number
+): Promise<number> {
+  const result = await connExecute(
+    conn,
+    `UPDATE pets SET offer_last_date = ?, reply_pending = 1, reply_due_at = ?, updated_at = ?
+     WHERE id = ? AND (offer_last_date IS NULL OR offer_last_date < ?)`,
+    [offerDate, replyDueAt, Date.now(), petId, offerDate]
+  );
+  return result.affectedRows;
+}
+
+/**
+ * 事务内：回信生成完成后清除 pending 并记录 last_reply_at（阶段 4）。
+ */
+export async function markReplyClearedInTx(
+  conn: import("mysql2/promise").PoolConnection,
+  petId: string,
+  lastReplyAt: number
+): Promise<void> {
+  await connExecute(
+    conn,
+    "UPDATE pets SET reply_pending = 0, last_reply_at = ?, updated_at = ? WHERE id = ?",
+    [lastReplyAt, Date.now(), petId]
+  );
+}
+
+/**
+ * 事务内更新 daily_grant_last_date（供 daily-grant 模块使用）。
+ *
+ * P1-003 修复：条件 WHERE 保证并发幂等——
+ *   WHERE id = ? AND (daily_grant_last_date IS NULL OR daily_grant_last_date < ?)
+ * 返回 affectedRows；为 0 时调用方视为已被并发请求处理，rollback 并返回
+ * already_granted_today。
+ */
+export async function updateDailyGrantDateInTx(
+  conn: import("mysql2/promise").PoolConnection,
+  petId: string,
+  date: string
+): Promise<number> {
+  const result = await connExecute(
+    conn,
+    "UPDATE pets SET daily_grant_last_date = ?, updated_at = ? " +
+      "WHERE id = ? AND (daily_grant_last_date IS NULL OR daily_grant_last_date < ?)",
+    [date, Date.now(), petId, date]
+  );
+  return result.affectedRows;
+}
+
+/**
+ * 更新 pet.next_proactive_ts（阶段 4 P1-001 修复）。
+ *
+ * 语义：
+ *   - /api/sync 计算 backoff 后写回 DB，使 reply.ts::isReplyDue 的 backoff_active
+ *     分支在生产环境生效（此前 next_proactive_ts 从未写入 → 死代码）
+ *   - 仅在 backoff.nextProactiveTs 非 null 时调用（缺席 < 24h 时 nextProactiveTs=null，
+ *     无实际语义，跳过写库节省一次 UPDATE）
+ *
+ * @param petId 目标 pet
+ * @param nextProactiveTs 下次主动触达的绝对时间戳（UTC ms）；null 表示"保持正常频率"
+ */
+export async function updateNextProactiveTs(
+  petId: string,
+  nextProactiveTs: number | null,
+  ts: number = Date.now()
+): Promise<void> {
+  const pool = getPool();
+  await execute(
+    pool,
+    "UPDATE pets SET next_proactive_ts = ?, updated_at = ? WHERE id = ?",
+    [nextProactiveTs, ts, petId]
+  );
+}
+
+/** 非事务版 markReplyCleared（供单测与降级路径） */
+export async function markReplyCleared(
+  petId: string,
+  lastReplyAt: number
+): Promise<void> {
+  const pool = getPool();
+  await execute(
+    pool,
+    "UPDATE pets SET reply_pending = 0, last_reply_at = ?, updated_at = ? WHERE id = ?",
+    [lastReplyAt, Date.now(), petId]
+  );
+}
+
 export async function updateStateAndActivityInTx(
   conn: import("mysql2/promise").PoolConnection,
   petId: string,

@@ -98,6 +98,53 @@ Next.js 16 Turbopack 构建时会自动推断 Route/Instrumentation Runtime；No
 
 ---
 
+### [2026-09-10] 跨阶段集成缺口：上游字段「只计算不持久化」，下游拿它做判断 → 死代码（P1-001）
+
+**阶段**：阶段 4 开发（根源在阶段 3）
+
+**问题描述**：
+阶段 3 `/api/sync` 计算了 `backoff.nextProactiveTs` 但**只返回给客户端、从未写回 `pets.next_proactive_ts`**；阶段 4 的 `isReplyDue` 读该字段做退避判断（`nextProactiveTs > now → backoff_active`）——DB 中该列恒为 NULL，导致退避分支是生产环境死代码，单测却因 mock 数据而全绿。
+
+**根因分析**：
+跨阶段字段的「写入方 / 读取方 / 写入时机」没有明确契约。阶段 3 的验收只说退避「可观测」（返回即可），阶段 4 却假设它已持久化。两个阶段各自验收都过，集成处断掉。
+
+**修复方案**：
+`/api/sync` 在 catchup 后、replyCheck 前写回 `next_proactive_ts`（try/catch 不阻断主流程）；补 `pets-backoff.test.ts` + `reply.test.ts` 端到端用例（离开 3 天 → now+7d → backoff_active 生效）。
+
+**预防措施**：
+- 跨阶段的**状态字段**（各表可持久化状态）必须明确「谁写」：验收项写「可观测」不够，必须写「持久化到何处」
+- 阶段开发前抽查上游产出：下游依赖的上游字段，实际读一次 DB 验证值非空
+- 单测 mock 的字段必须紧跟着在集成/端到端用例里验证一次真实写入路径
+
+**标签**：`技术` / `流程`
+
+**状态**：`已闭环`
+
+---
+
+### [2026-09-10] 「每日限一次」靠事务外内存判断 → 并发下可双写（P1-003）
+
+**阶段**：阶段 4 开发
+
+**问题描述**：
+`grantDailyItem` / `offerInventoryItem` 均在事务外基于已读 pet 对象判断 `hasGrantedToday` / `hasOfferedToday`，事务内无条件 UPDATE；并发（多标签页、重试、sync 与手动 API 撞车）时两个请求都通过判断，产生双份物品/事件。
+
+**根因分析**：
+用「先读后写」实现幂等——应用层判断天然有竞态窗口，而 DB 层无唯一约束/条件 WHERE 保护。
+
+**修复方案**：
+三个 repo 函数改为条件 UPDATE（`WHERE ... IS NULL OR ... < today` / `WHERE offered_at IS NULL`）并返回 `affectedRows`；领域层 `affectedRows === 0` → 抛 `IdempotencyError` → 事务 rollback → 返回 already_*。offer 用双门（pets 门 + inventory 门）。
+
+**预防措施**：
+- **所有「限一次 / 去重 / 状态机转换」语义必须由 DB 条件写入保证**（affectedRows 判定 + rollback），不得依赖应用层读判断
+- 幂等类需求验收时至少设计一个并发（双请求）用例
+
+**标签**：`技术`
+
+**状态**：`已闭环`
+
+---
+
 ### [2026-09-09] 本机 Docker 未启动 → MySQL 集成实测无法执行
 
 **阶段**：阶段 1 开发
