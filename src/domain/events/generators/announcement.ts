@@ -4,8 +4,10 @@
  * 所属模块：domain/events/generators
  * 契约冻结：docs/packs-contract.md §system_announce
  * 说明：
- *   - 阶段 2 保留生成器骨架；公告中心在阶段 5 落地
- *   - 该事件类型 embed 到时间线里，让公告与 pet 行为统一展示
+ *   - 阶段 2 保留生成器骨架；阶段 5 落地公告中心；阶段 6 接入 events 表（P2-001）
+ *   - P2-003 修复（阶段 6）：params 只存 announcement_id 引用，title/body 由 UI 层
+ *     在渲染时通过 announcements 表反查（事件结构不含文案硬约束）
+ *   - 生成器本身无 IO：调用方（admin 发布流程）负责把产物写入 events 表
  */
 
 import { ulid as newUlid } from "ulid";
@@ -15,18 +17,12 @@ import {
 } from "../types";
 
 export interface AnnounceContext extends EventContext {
+  /** 公告 id（渲染时反查 announcements 表补 title/body） */
   announcementId: string;
-  announcementTitle: string;
-  announcementBody: string;
 }
 
-// TODO(阶段 6)：接入 system_announce 前必须重构——
-// params 只应存 announcement_id（引用），title/body 由 UI 层反查 announcements 表，
-// 以符合「事件结构不含文案」硬约束（阶段 5 质检 P2-003）；
-// 届时同步评估 packs-contract.md v1.0.1 的 system_announce 插槽描述（可能 bump 到 v1.1.0，需契约评审）。
 export function generateSystemAnnounce(ctx: AnnounceContext): GeneratedEvent {
   const { pet } = ctx;
-  // Round 2 P3-001 清理：系统公告不需要随机性，不再提取 ctx.rng
   const ts = ctx.ts ?? Date.now();
   const hubId = ctx.hubId ?? pet.hubId;
 
@@ -39,8 +35,6 @@ export function generateSystemAnnounce(ctx: AnnounceContext): GeneratedEvent {
     fsmState: pet.state,
     params: {
       announcement_id: ctx.announcementId,
-      announcement_title: ctx.announcementTitle,
-      announcement_body: ctx.announcementBody,
     },
     memoryRefs: [],
     source: "system",

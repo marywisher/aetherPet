@@ -91,6 +91,8 @@ export function buildAggregation(
     previewTitles: backfilled
       .slice(0, previewLimit)
       .map((it) => it.announcement.title),
+    // P2-002：被合并公告的 id（UI 从主列表隐藏）
+    aggregatedIds: backfilled.map((it) => it.announcement.id),
   };
 }
 

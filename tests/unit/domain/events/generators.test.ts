@@ -270,17 +270,16 @@ describe("阶段 2 骨架生成器（aggregate_summary / system_announce）", ()
     expect(event.source).toBe("catchup");
   });
 
-  it("system_announce memoryRefs=[] 且 source='system'", () => {
+  it("system_announce memoryRefs=[] 且 source='system'（P2-003：params 只存 announcement_id，不含文案）", () => {
     const { event } = generateSystemAnnounce({
       ...BASE_CTX,
       announcementId: "ann-1",
-      announcementTitle: "公告标题",
-      announcementBody: "公告正文内容",
     });
     expect(event.type).toBe("system_announce");
     expect(event.source).toBe("system");
     expect(event.memoryRefs).toEqual([]);
     expect(event.params.announcement_id).toBe("ann-1");
-    expect(event.params.announcement_title).toBe("公告标题");
+    expect(event.params).not.toHaveProperty("announcement_title");
+    expect(event.params).not.toHaveProperty("announcement_body");
   });
 });

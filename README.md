@@ -23,14 +23,14 @@ aetherPet is designed as **an open ecosystem**, not a closed app:
 
 | Stage | Module | Status |
 |-------|--------|--------|
-| 1 | Foundation · Auth (email magic-code) · Pack loader | ✅ done (QA passed) |
-| 2 | Pet FSM · Event engine · Contract freeze | 🔜 next |
-| 3 | Catch-up simulation · Backoff · Timeline UI | todo |
-| 4 | Daily gift + reply letter | todo |
-| 5 | Announcements + profile | todo |
-| 6 | Export/import · Deploy · Perf smoke | todo |
+| 0–1 | Requirements · Architecture · Foundation · Auth · Pack loader | ✅ done |
+| 2 | Pet FSM · Event engine · Contract freeze v1.0.1 | ✅ done |
+| 3 | Catch-up simulation · Backoff · Timeline UI | ✅ done |
+| 4 | Daily gift + reply letter | ✅ done |
+| 5 | Announcements + profile | ✅ done |
+| 6 | Export/import · Deploy · Perf smoke | 🔜 current |
 
-See [`docs/dev-stage-plan.md`](docs/dev-stage-plan.md) for the full plan and [`docs/requirements.md`](docs/requirements.md) for the MVP spec.
+See [`docs/dev-stage-plan.md`](docs/dev-stage-plan.md) for the full plan and [`docs/requirements.md`](docs/requirements.md) for the MVP spec. Self-hosting guide: [`docs/SELF_HOST.md`](docs/SELF_HOST.md).
 
 ## Tech stack
 

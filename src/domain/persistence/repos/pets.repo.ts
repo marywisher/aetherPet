@@ -5,7 +5,7 @@
  */
 
 import { getPool } from "../db";
-import { query, queryOne, execute, connExecute } from "../sql";
+import { query, queryOne, execute, connExecute, connQuery } from "../sql";
 import { getEnv } from "@/config/env";
 import type { Pet, PetState } from "../../types";
 
@@ -297,4 +297,34 @@ export async function updateStateAndActivityInTx(
       user_last_active_ts = ?, updated_at = ? WHERE id = ?`,
     [state, stateSince, activityTs, activityTs, Date.now(), petId]
   );
+}
+
+/**
+ * 阶段 6：切换 pet 生效素材包（事务内，供 POST /api/packs/activate）。
+ * 返回受影响的 pet 行数；幂等（同一包重复切换无副作用）。
+ */
+export async function updateActivePackInTx(
+  conn: import("mysql2/promise").PoolConnection,
+  userId: string,
+  packName: string
+): Promise<number> {
+  const r = await connExecute(
+    conn,
+    "UPDATE pets SET active_pack_name = ?, updated_at = ? WHERE user_id = ?",
+    [packName, Date.now(), userId]
+  );
+  return r.affectedRows;
+}
+
+/** 查询用户已有 pet 的当前生效包（供激活接口确认一致性） */
+export async function findActivePackNames(
+  conn: import("mysql2/promise").PoolConnection,
+  userId: string
+): Promise<string[]> {
+  const rows = await connQuery<{ active_pack_name: string }>(
+    conn,
+    "SELECT active_pack_name FROM pets WHERE user_id = ?",
+    [userId]
+  );
+  return rows.map((r) => r.active_pack_name);
 }

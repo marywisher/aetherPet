@@ -37,6 +37,7 @@ import { checkAndGenerateReply } from "@/domain/gift/reply";
 import { toLocalDateStr } from "@/domain/util/date";
 import { renderEvent, type TextSlotTemplate } from "@/domain/events/render";
 import { loadPackByName } from "@/domain/packs/loader";
+import { buildAnnouncePlaceholderMap, withAnnouncePlaceholders } from "@/lib/render-announce";
 
 /**
  * 注：P2-004 修复——将本地 resolveToken 副本换成 lib/auth.ts 的 requireAuth，
@@ -135,9 +136,15 @@ export async function GET(req: Request): Promise<NextResponse> {
   // 5) 时间线（渲染后返回，前端直接使用）
   const recentEvents = await findEventsByPetId(pet.id, 20);
   const pack = await loadPackByName(pet.activePackName ?? "default");
+  // 阶段 6（P2-001）：system_announce 渲染前反查公告
+  const announcePlaceholders = await buildAnnouncePlaceholderMap(recentEvents);
   const renderedEvents = recentEvents.map((e) => {
     const packText = pack?.texts[e.type] as TextSlotTemplate | undefined;
-    const rendered = renderEvent(e, packText ?? null, pet.name);
+    const eForRender =
+      e.type === "system_announce"
+        ? withAnnouncePlaceholders(e, announcePlaceholders.get(String(e.params.announcement_id ?? "")))
+        : e;
+    const rendered = renderEvent(eForRender, packText ?? null, pet.name);
     return { event: e, rendered };
   });
 
@@ -146,9 +153,16 @@ export async function GET(req: Request): Promise<NextResponse> {
   let latestAggregateRendered = null;
   if (latestAggregate) {
     const packText = pack?.texts[latestAggregate.type] as TextSlotTemplate | undefined;
+    const aggForRender =
+      latestAggregate.type === "system_announce"
+        ? withAnnouncePlaceholders(
+            latestAggregate,
+            announcePlaceholders.get(String(latestAggregate.params.announcement_id ?? ""))
+          )
+        : latestAggregate;
     latestAggregateRendered = {
       event: latestAggregate,
-      rendered: renderEvent(latestAggregate, packText ?? null, pet.name),
+      rendered: renderEvent(aggForRender, packText ?? null, pet.name),
     };
   }
 

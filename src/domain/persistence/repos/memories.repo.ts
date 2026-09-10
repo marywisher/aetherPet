@@ -41,10 +41,11 @@ function rowToMemory(row: MemoryRow): Memory {
 }
 
 export async function insert(
-  data: Omit<Memory, "id" | "createdAt"> & { id: string },
+  data: (Omit<Memory, "id" | "createdAt"> & { id: string }) & { createdAt?: number },
   conn?: PoolConnection
 ): Promise<Memory> {
-  const now = Date.now();
+  // 阶段 6：导入恢复需要保留原始 created_at（导出“逐字段比对一致”）；不传则取当前时刻
+  const now = data.createdAt ?? Date.now();
   const sqlText = `INSERT INTO memories
     (id, pet_id, kind, value, created_at, last_referenced, weight, is_permanent, schema_version, hub_id)
    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;

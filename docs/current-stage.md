@@ -3,50 +3,38 @@
 > 本文件由主 agent 在启动阶段开发链前写入，链内工程师/质检员必须先读本文件确认范围。
 > 请在**无上级指示冲突**时，以本文件为准执行。
 
-## 当前阶段：阶段 6 — 导出/导入 + 部署 + 性能冒烟（**收官阶段**）
+## 当前阶段：阶段 6 — 导出/导入 + 部署 + 性能冒烟（收官阶段）
 
-> ✅ 阶段 5（公告 + 档案页）已完成：481 单测全过、终检 P0/P1/P2=0、建议提交。
-> ⚠️ 阶段 5 教训（docs/pitfalls.md 最新 3 条必读）：
-> 1. **⚠️ 重复踩坑：API 层零集成测试 → P0 逃逸**。本阶段必须补齐 API 层集成测试（临时 MySQL 容器或内存 DB）
-> 2. 交付声明必须与代码一致（质检要 grep 关键导出符号，不采信报告）
-> 3. 不存在的路径不该存在（备用路径要么实现可用要么删除）
+> ⚠️ 状态更新：**代码已完成，独立质检通过（P0/P1 = 0，评级「优」，报告 `reports/qa-stage6.md`）**。
+> 剩余：① 用户确认质检结果 ② 用户确认 git 提交 ③ 全量 11 项验收的最终 E2E（如需真 MySQL 演示，见下）。
 
-**详细范围**：见 `docs/dev-stage-plan.md` §3「阶段 6」章节（模块清单、演示、验收、交付物）。
+## 阶段 6 已完成交付（质检已核验）
 
-**权威文档**：
-- `docs/dev-stage-plan.md`（阶段 6）
-- `docs/requirements.md`（§3.9 数据导出规范 v1、§3.10 素材包、§3.12 部署、验收 #7/#8/#9/#11）
-- `CONTEXT.md`（数据主权、公告、中心自治邮件）
-- `docs/database-schema.md`（导出结构 §4.2）、《架构》§4.3.3（导出导入时序）
-- `docs/pitfalls.md`（**最新 3 条必读**）
-- `reports/qa-final-stage5.md`（阶段 5 结论与延后项）
+1. **导出器/导入器** `src/domain/export/`（schema.ts / exporter.ts / importer.ts / error-messages.ts）+ `GET /api/export`、`POST /api/import`
+   - 导出含 `schema_version=1.0.0` / `exported_at` / `exported_from` / `SHA256` 校验和；排除 token/验证码/审计/邮箱明文
+   - 导入三类错误分文案（版本不匹配 / 校验和失败 / 字段缺失），单事务恢复（先清空再重建，失败整体 rollback）
+   - 导出更新 `users.last_backup_hash`（申诉身份证明）；导入更新 `imported_from_hub/imported_at`
+2. **前端**：/export（确认弹窗：包含/不包含清单）、/import（文件预览 + 三类报错分类展示）、/settings（修复阶段 5 遗留 404 链接）
+3. **申诉入口**：/account/help（备份 hash + 邮箱证明流程）；/api/profile 新增 emailHash/lastBackupHash/createdAt
+4. **开发者模式**：/developer + `POST /api/packs/activate`（事务落库 pets + user_settings + 审计 pack_switched）；新增备用素材包 `morning`
+5. **部署**：`next.config.ts` output: standalone + trace includes（migrations/*.sql + packs）；docker/Dockerfile + docker-compose.yml；
+   pm2-ecosystem.config.js；SELF_HOST.md（宝塔 + Docker 双路径全流程）；scripts/smoke-test.ts + scripts/backup.ts（mysqldump 包装）；
+   .github/workflows/ci.yml（含临时 MySQL service 跑集成测试）+ release.yml（tag 触发镜像构建）
+6. **阶段 5 遗留闭环**：P2-001/P2-003（system_announce 生成器 params 只存 announcement_id + admin 发布时为全 pet 插入事件、
+   时间线渲染反查公告）、P2-002（公告聚合列表主列表隐藏已聚合项 + 次级展开）；P3-007（withTransaction rollback 端到端测试）
+7. **集成测试补齐**（阶段 5 重复踩坑闭环）：`tests/integration/export-import.api.test.ts`（真实 MySQL，`INTEGRATION_DB=1` 启用，CI 自动跑）
 
-**工作目录**：C:/Python Auto/Python AI/cl/flutter/aetherPet（阶段 1-5 完成，481 单测基线；Docker 本机不可用，集成/E2E 以静态 + 构建验证为主）
+## 验证结果（当前工作区）
 
-## 阶段 6 验收覆盖（最后 4 项 + 全量回归）
+- `npx tsc --noEmit` → 0 错误
+- `npx vitest run` → 508 passed / 8 skipped（集成测试需 INTEGRATION_DB=1 + 真实 MySQL；CI 中运行）
+- `npm run build` → exit 0（6 条 Edge-runtime 噪音与基线一致，属 stage 3 已确认项）
+- `npx eslint src` → 新文件 0 错误；剩余 errors 全为基线历史债（stage 1-5 遗留）
+- `npm run smoke:skip-db` → 全通过（30 天补算平均 0ms；DB/事务 P99 项需真 MySQL，CI 跑）
 
-| 验收项 | 本阶段完成度 |
-|--------|-------------|
-| #7 数据导出/导入 | 完整：schema 版本 + SHA256 + 元信息 + 三类报错分文案 + 逐字段比对 |
-| #8 素材包可配置性 | 开发者模式切换包验证 |
-| #9 部署 + 性能 | standalone + 宝塔/Docker 双路径文档 + 冒烟（<3s 加载、补算秒级） |
-| #11 账号申诉 | 申诉页面存在、备份 hash 作身份证明 |
-| #1-#6、#10 回归 | 全量 E2E 覆盖（尽量） |
+## 待办与约束
 
-## 阶段规划模块
-
-1. **导出器/导入器** `src/domain/export/`（exporter/importer/schema/error-messages）+ `GET /api/export`、`POST /api/import`
-2. **前端**：/export（确认弹窗）、/import（导入 + 三类报错展示）
-3. **申诉入口**：/account/help（备份 hash + 邮箱证明流程说明）
-4. **开发者模式**：/developer + `POST /api/packs/activate`（素材包切换验证）
-5. **部署**：next.config standalone、docker/Dockerfile + compose、pm2-ecosystem、SELF_HOST.md（宝塔 + Docker 双路径）、scripts/smoke-test.ts、scripts/backup.ts（mysqldump 包装）、.github/workflows（CI 用临时 MySQL）
-6. **阶段 5 遗留闭环**：P2-001（system_announce 接入 events + **生成器 params 剥离文案只存 announcement_id**，P2-003）、P2-002（公告聚合列表隐藏已聚合项）、API 集成测试补齐
-7. **清理**：Edge Runtime 噪音确认（healthz/instrumentation 已加 runtime 声明）；P3-007（withTransaction rollback 端到端测试）
-
-## 关键约束
-
-1. 导出 JSON 必须含 `schema_version`（1.0.0）/ `exported_at` / `exported_from`（hub_id）/ SHA256 checksum；导入三类错误分文案（版本不匹配/校验和失败/字段缺失）
-2. 导入走单一事务，失败整体 rollback（不得出现半导入状态）
-3. 领域层纯 TS；事件结构不含文案（**P2-003 必须改**）；MySQL 保持；契约评估后再决定是否 bump（system_announce 插槽改动需契约评审）
-4. 部署文档是硬交付——宝塔（Apache 反代 + PM2 + MySQL + mysqldump 备份）与 Docker Compose 双路径都要写全
-5. 不要 git commit/push；Docker 不可用时集成验证降级为静态 + 构建（标注遗留）
+1. **不要 git commit/push**——等待用户确认后再提交（提交信息建议：`feat(stage-6): 导出/导入+部署+性能冒烟`）
+2. Docker 本机不可用：集成/E2E 以静态 + 单测 + 构建验证为准；CI 用临时 MySQL 容器补真实集成
+3. 若需真 MySQL 演示（导出一致性/切换包视觉变化），用 docker compose（路径 b）或宝塔 MySQL 起
+4. 11 项验收最终回归矩阵见 `docs/dev-stage-plan.md` §7（#7/#8/#9/#11 已由本阶段交付 + QA 核验）

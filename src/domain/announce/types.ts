@@ -79,9 +79,14 @@ export interface AnnouncementAggregation {
   lastPublishedAt: Timestamp;
   /**
    * 展示级 titles 快照（不超过 3 条，从最新到最旧）。
-   * 快照仅用于列表 UI 展示"这些标题都被合并了"，不替代原始 announcement。
+   * 快照仅用于列表 UI 展示“这些标题都被合并了”，不替代原始 announcement。
    */
   previewTitles: string[];
+  /**
+   * 被合并进聚合的公告 id（阶段 6 P2-002）：UI 据此从主列表隐藏这些条目，
+   * 只在聚合卡片下提供“已合并 N 条”的可展开次级列表，避免“轰炸”感。
+   */
+  aggregatedIds: string[];
 }
 
 /** buildList 输入：从 repo 层拿到的原始两表数据 */
@@ -96,6 +101,7 @@ export interface ListInput {
 
 /** buildList 输出 */
 export interface ListOutput {
+  /** 主列表条目（已隐藏被聚合项——P2-002） */
   items: AnnouncementWithStatus[];
   /** 未读数（不含 muted） */
   unreadCount: number;
@@ -103,4 +109,8 @@ export interface ListOutput {
   mutedCount: number;
   /** 空窗聚合（null 表示无聚合） */
   aggregation: AnnouncementAggregation | null;
+  /** 被聚合进摘要、从主列表隐藏的公告 id（UI 次级展开用） */
+  aggregatedIds: string[];
+  /** 被聚合的公告完整条目（供聚合卡片下“展开已合并 N 条”次级列表渲染） */
+  aggregatedItems: AnnouncementWithStatus[];
 }

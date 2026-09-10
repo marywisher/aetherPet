@@ -1,0 +1,27 @@
+{
+  "title": { "mode": "fixed", "default": "{pet_name}" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+      "昨晚梦见你了，醒来还有点想",
+      "刚才突然想到你，就来跟你打招呼",
+      "今天没什么事，就是想写点什么",
+      "月亮特别圆，让我想起你说过的一句话",
+      "夜里风大，窗没关严，忽然想你了",
+      "没什么特别的理由，就是想你了",
+      "{pet_name} 今天冒出一封信，也不知道为什么",
+      "刚才打了个喷嚏，感觉是你想到了我"
+    ],
+    "poetic": [
+      "月光是旧信纸，我把你名字写在最上面",
+      "我把 {recall_line} 折成纸船，让它顺着风飘到你那儿",
+      "夜里的风替我给你说了声晚安"
+    ]
+  },
+  "poetic_ratio": 0.1
+},
+"sign_off": { "mode": "fixed", "default": "—— {pet_name}" },
+"recall_required": ["time_anchor", "pet_name"],
+"recall_min_count": 0
+}

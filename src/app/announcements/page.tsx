@@ -37,6 +37,9 @@ interface ListResponse {
   unreadCount: number;
   mutedCount: number;
   aggregation: AnnouncementAggregation | null;
+  /** P2-002：被聚合隐藏的公告 id + 完整条目（次级展开用） */
+  aggregatedIds?: string[];
+  aggregatedItems?: AnnouncementItem[];
 }
 
 function formatDate(ts: number): string {
@@ -64,6 +67,7 @@ function AnnouncementsInner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showAggregated, setShowAggregated] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
@@ -229,7 +233,7 @@ function AnnouncementsInner() {
         </section>
       )}
 
-      {/* 空窗聚合摘要 */}
+      {/* 空窗聚合摘要（P2-002：主列表已隐藏聚合项，这里提供次级展开） */}
       {data?.aggregation && (
         <section
           className="rounded-lg p-4"
@@ -239,16 +243,41 @@ function AnnouncementsInner() {
           }}
         >
           <div className="text-sm font-semibold" style={{ color: "var(--pack-ink)" }}>
-            过去 {data.aggregation.spanDays} 天有 {data.aggregation.count} 条公告
+            过去 {data.aggregation.spanDays} 天有 {data.aggregation.count} 条公告（已合并）
           </div>
           <ul className="mt-2 text-xs space-y-1" style={{ color: "var(--muted)" }}>
             {data.aggregation.previewTitles.map((t, i) => (
               <li key={i}>· {t}</li>
             ))}
           </ul>
-          <p className="mt-2 text-xs" style={{ color: "var(--muted)" }}>
-            下方仍可逐条查看。
-          </p>
+          {(data.aggregatedItems?.length ?? 0) > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowAggregated((v) => !v)}
+              className="mt-2 text-xs underline"
+              style={{ color: "var(--pack-accent)" }}
+            >
+              {showAggregated ? "收起已合并公告" : `展开全部 ${data.aggregation.count} 条`}
+            </button>
+          )}
+          {showAggregated && (
+            <div className="mt-3 space-y-2">
+              {(data.aggregatedItems ?? []).map((it) => (
+                <AnnouncementCard
+                  key={it.announcement.id}
+                  item={it}
+                  expanded={expandedId === it.announcement.id}
+                  onToggle={() => {
+                    const next = expandedId === it.announcement.id ? null : it.announcement.id;
+                    setExpandedId(next);
+                    if (next && it.status === "unread") {
+                      void handleRead(it.announcement.id);
+                    }
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </section>
       )}
 

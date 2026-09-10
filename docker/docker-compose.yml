@@ -1,0 +1,80 @@
+# aetherPet · 自托管路径 b：Docker Compose（app + mysql 两容器）
+# 用法：
+#   cd 项目根
+#   cp .env.example .env   # 按需修改（DB_* 改成下面 compose 的默认值即可）
+#   docker compose -f docker/docker-compose.yml up -d --build
+#
+# 与宝塔路径 a 的区别：本路径不依赖宝塔 MySQL，数据库也跑在容器里。
+# 备份：任选其一
+#   - 应用内置 scripts/backup.ts（宿主机执行 mysqldump）
+#   - 或直接在容器里 `docker compose exec mysql mysqldump ...`
+name: aetherpet
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme-root}
+      MYSQL_DATABASE: ${DB_NAME:-aetherpet}
+      MYSQL_USER: ${DB_USER:-aetherpet}
+      MYSQL_PASSWORD: ${DB_PASS:-changeme}
+      TZ: Asia/Shanghai
+    volumes:
+      - aetherpet_mysql_data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --sql-mode=STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION
+      - --default-time-zone='+08:00'
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-changeme-root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      # 数据库指向 compose 内的 mysql 服务
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USER: ${DB_USER:-aetherpet}
+      DB_PASS: ${DB_PASS:-changeme}
+      DB_NAME: ${DB_NAME:-aetherpet}
+      DB_AUTO_MIGRATE: "true"
+      # 中心身份 / 邮件 / 公告密钥（从 .env 注入）
+      HUB_ID: ${HUB_ID:-local}
+      HUB_DISPLAY_NAME: ${HUB_DISPLAY_NAME:-aetherPet}
+      HUB_ADMIN_EMAIL: ${HUB_ADMIN_EMAIL:-admin@example.com}
+      HUB_PRIVACY_URL: ${HUB_PRIVACY_URL:-https://example.com/privacy}
+      HUB_DOMAIN: ${HUB_DOMAIN:-}
+      HUB_ADMIN_TOKEN: ${HUB_ADMIN_TOKEN:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-aetherpet@example.com}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_DRY_RUN: ${SMTP_DRY_RUN:-true}
+      NODE_ENV: production
+      # 反代在 compose 网络里直属如果只有一层，保持默认 false 即可；
+      # 若在 Nginx/宝塔反代后需配 TRUST_PROXY=true + PROXY_TRUST_HOPS
+      TRUST_PROXY: ${TRUST_PROXY:-false}
+      PROXY_TRUST_HOPS: ${PROXY_TRUST_HOPS:-1}
+      ENABLE_DEV_ENDPOINTS: "false"
+    ports:
+      - "3000:3000"
+    volumes:
+      # 日志目录（可选）：把容器内的 logs 暴露到宿主机便于采集
+      - aetherpet_logs:/app/logs
+
+volumes:
+  aetherpet_mysql_data:
+  aetherpet_logs:

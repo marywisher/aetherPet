@@ -9,7 +9,7 @@
  */
 
 import { getPool } from "../db";
-import { query, queryOne, connQuery, connQueryOne } from "../sql";
+import { query, queryOne, connQuery, connExecute, execute } from "../sql";
 import type { PoolConnection } from "mysql2/promise";
 import type { Item } from "../../types";
 
@@ -76,4 +76,37 @@ export async function findAll(): Promise<Item[]> {
     "SELECT * FROM items ORDER BY id ASC"
   );
   return rows.map(rowToItem);
+}
+
+/**
+ * 导入用：INSERT IGNORE 写入一条 item 目录（同 id 已存在则跳过，不覆盖中心既有目录）。
+ * 返回 true 表示新插入，false 表示已存在被忽略。
+ */
+export async function insertIgnore(
+  data: Pick<
+    Item,
+    "id" | "displayName" | "description" | "iconPath" | "rarityWeight" | "category" | "schemaVersion" | "hubId"
+  >,
+  conn?: PoolConnection
+): Promise<boolean> {
+  const sqlText = `INSERT IGNORE INTO items
+    (id, display_name, description, icon_path, rarity_weight, category,
+     base_price_cents, currency_code, schema_version, hub_id)
+   VALUES (?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?)`;
+  const params = [
+    data.id,
+    data.displayName,
+    data.description,
+    data.iconPath,
+    data.rarityWeight,
+    data.category,
+    data.schemaVersion,
+    data.hubId,
+  ];
+  if (conn) {
+    const r = await connExecute(conn, sqlText, params);
+    return r.affectedRows > 0;
+  }
+  const r = await execute(getPool(), sqlText, params);
+  return r.affectedRows > 0;
 }

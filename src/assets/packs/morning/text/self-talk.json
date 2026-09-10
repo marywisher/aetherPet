@@ -1,0 +1,19 @@
+{
+  "title": { "mode": "fixed", "default": "晨间絮语" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "（晨光备用包）早上的风凉凉的，我数了窗台上的露珠。",
+        "（晨光备用包）喝过水了，今天的心情像刚晒好的被子。"
+      ],
+      "poetic": [
+        "（晨光备用包）天光落在叶子上，像你很久以前说的那句话。"
+      ]
+    },
+    "poetic_ratio": 0.1
+  },
+  "sign_off": { "mode": "fixed", "default": "—— {pet_name}" },
+  "recall_required": [],
+  "recall_min_count": 0
+}

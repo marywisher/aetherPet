@@ -133,13 +133,27 @@
 **开始时间**：2026-09-10
 **前置依赖**：阶段 1-5 全部
 **核心内容**：数据导出/导入（数据主权闭环）、开发者模式、宝塔+Docker 双路径部署、SELF_HOST、CI、11 项验收全量回归、阶段 5 遗留闭环
+**完成时间**：2026-09-10（代码完成，独立质检通过 P0/P1=0，评级「优」；待用户确认提交）
+**阶段产出**：
+- `src/domain/export/`（schema/exporter/importer/error-messages）+ `GET /api/export`、`POST /api/import`
+- 页面 `/export` `/import` `/settings` `/developer` `/account/help`；备用素材包 `morning`；`POST /api/packs/activate`
+- 部署：next.config standalone + trace；docker/Dockerfile + compose.yml；pm2-ecosystem；SELF_HOST.md；scripts/smoke|backup；.github/workflows（ci + release）
+- 阶段 5 闭环：P2-001/002/003（system_announce 接入 + 文案剥离 + 聚合隐藏）；P3-007 rollback 测试
+- 集成测试 `tests/integration/export-import.api.test.ts`（真实 MySQL，CI 跑）；单测 508 passed（+27）
+**关键决策**：
+1. 导入=恢复语义（先清空当前用户数据再按导出重建，单事务）；校验顺序版本→校验和→字段（§4.3）
+2. P2-001 解法：admin 发布公告时为所有 pet 插 system_announce 事件（同一事务），渲染时反查公告表补文案
+3. standalone 运行时相对路径文件（migrations .sql / 素材包）用 outputFileTracingIncludes 纳入产物
+4. withTransaction 增加可选 pool 参数作测试缝；vitest beforeEach 用 resetAllMocks（踩坑已记）
+**遗留问题**：
+- 真 MySQL E2E 演示未跑（本机 Docker 不可用）；CI 已配临时 MySQL service，推送后自动补
+- 基线 lint 债（stage 1-5 的 19 errors）未清理——已由 CI 限定 eslint src 并记录
 
 ---
 
 ## 项目全局状态
-- 当前阶段：阶段 2
-- 已完成：阶段 1（含需求/评审/架构）
-- 待完成：阶段 2–6
+- 当前阶段：阶段 6（代码完成，待提交）
+- 已完成：阶段 1–5（已提交）+ 阶段 6 代码（待提交）
 - 关键文档索引：
   - `docs/requirements.md` — 需求 + 验收（权威）
   - `docs/architecture.md` / `docs/database-schema.md` — 架构 + MySQL DDL

@@ -323,3 +323,92 @@ CONTEXT.md 退避表首行"每天来"无具体间隔值。若解读为"1 天"，
 **标签**：`技术`
 
 **状态**：`已闭环`
+---
+
+### [2026-09-10] 阶段 6：「重复踩坑」闭环——API 集成测试终于落地（含临时 MySQL）
+
+**阶段**：阶段 6 开发
+
+**问题描述**：
+阶段 5 曾记录「重复踩坑：API 层零集成测试 → P0 逃逸（GET /api/announcements 缺失）」。阶段 6 起，新增路由一律配套 API 级集成测试，
+且 CI 用 GitHub Actions MySQL service 跑临时容器；本地无 Docker/MySQL 时测试自动 skip（`INTEGRATION_DB=1` 才启用），不污染单测基线。
+
+**根因分析**：
+前几阶段「单测只 mock repo/sql、API 层零自动化」的结构性缺口，靠「手动 curl」与「质检 grep 导出符号」兜底，仍会漏（P0-001 漏了 GET handler）。
+
+**修复方案**：
+1. `tests/integration/export-import.api.test.ts`——直接调用 route 函数（`GET(req)`/`POST(req)`）+ 真实 MySQL：
+   覆盖 401、三态校验错误（版本/校验和/字段缺失）、导出→清空→导入往返逐字段比对、素材包激活 404/200 落库。
+2. `withTransaction` 增加可选 `pool` 参数作为测试缝——新增 `tests/unit/persistence/with-transaction.test.ts`（P3-007 闭环）：
+   成功 commit / 失败 rollback / rollback 自身失败不吞原错误，全部端到端验证。
+3. 构建期验证：`next build` 有 `output: "standalone"` 后，migrations/*.sql 与素材包必须显式 `outputFileTracingIncludes`，
+   否则运行时按相对路径读取直接失败（见下一条）。
+
+**预防措施**：
+- 新路由合并前，提交清单必须含「该路由的 API 级测试」（至少 GET/POST 主轴 + 401/404）
+- Route Handler 可直接用 `new Request(url, { headers: { cookie }, body })` 驱动测试，无需起 server
+- CI 用服务的临时 MySQL 跑集成测试；本地降级为 skip 时在报告中显式标注「未实跑」
+
+**标签**：`流程` / `技术`
+
+**状态**：`已闭环`
+
+---
+
+### [2026-09-10] 阶段 6：standalone 部署的「运行时相对路径文件」陷阱（migrations / 素材包）
+
+**阶段**：阶段 6 开发
+
+**问题描述**：
+`next.config.ts` 设 `output: "standalone"` 后，`.next/standalone` 只拷贝 trace 到的文件。
+migration runner 按 `process.cwd() + "src/domain/persistence/migrations"` 运行时读 `.sql`，素材包 loader 按
+`import.meta.url` 锚定的 `PROJECT_ROOT + "src/assets/packs"` 读文件——两者都不在默认 trace 里，生产容器/PM2 里会
+「启动失败（migration 找不到）」或「加载全部素材包失败」。
+
+**根因分析**：
+「代码里运行时用 fs 读的文件」不属于构建期静态 import，Next standalone 不会自动包含；且 loader 刻意用
+`import.meta.url` 锚点规避 whole-project trace（P2-008），这个锚点在 standalone 下解析到 `.next/standalone`——
+如果只把素材包拷到别处而不动 ASSET_PACKS_DIR 就全错。
+
+**修复方案**：
+`next.config.ts` 加：
+```ts
+outputFileTracingIncludes: {
+  "*": ["src/domain/persistence/migrations/**/*.sql", "src/assets/packs/**/*"],
+}
+```
+实测 `.next/standalone/src/domain/persistence/migrations/` 与 `src/assets/packs/{default,morning}/` 均进入产物。
+Dockerfile 只拷贝 standalone + static + public 即可，无需手工补拷。
+
+**预防措施**：
+- 任何「运行时 fs 相对路径读取」的目录，加 `outputFileTracingIncludes`，并在构建后 `ls .next/standalone/...` 验证
+- 修改部署形态后必须实测 standalone 产物内容（QA 已把此项列入验收 #9 检查）
+
+**标签**：`部署` / `技术`
+
+**状态**：`已闭环`
+
+---
+
+### [2026-09-10] 阶段 6：vitest `clearAllMocks` 不清 once 队列 → 跨用例串扰的假失败
+
+**阶段**：阶段 6 开发
+
+**问题描述**：
+导出器测试起初 `beforeEach(vi.clearAllMocks())`，多个用例共用同一 `mockResolvedValueOnce` 队列——前一个用例排队的
+返回值串到后一个用例，导致「单独跑通过、整文件跑失败」的伪失败，排查一度以为是实现 bug。
+
+**根因分析**：
+`vi.clearAllMocks()` 只清 calls/results，**不清 `mockResolvedValueOnce` 实现队列**；需要 `vi.resetAllMocks()`（或
+`mockReset()`）才会连 once 实现一起重置。这是 Vitest mock 语义的常见坑。
+
+**修复方案**：
+测试 `beforeEach` 统一用 `vi.resetAllMocks()`；涉及 mock 实现的用例显式重新赋值。
+
+**预防措施**：
+- 凡用 `mockResolvedValueOnce` 的套件，beforeEach 必须 `resetAllMocks` 而非 `clearAllMocks`
+- 出现「单测隔离通过、套件全跑失败」时先怀疑 mock 状态残留
+
+**标签**：`技术`
+
+**状态**：`已闭环`

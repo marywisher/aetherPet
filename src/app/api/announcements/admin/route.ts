@@ -21,6 +21,11 @@ import { insert as insertAnnouncement } from "@/domain/persistence/repos/announc
 import { insertAuditLog } from "@/domain/persistence/repos/audit.repo";
 import { newId } from "@/domain/util/ulid";
 import { getEnv } from "@/config/env";
+import { withTransaction } from "@/domain/persistence/db";
+import { connQuery } from "@/domain/persistence/sql";
+import { generateSystemAnnounce } from "@/domain/events/generators/announcement";
+import { insert as insertEvent } from "@/domain/persistence/repos/events.repo";
+import type { Pet } from "@/domain/types";
 
 export const runtime = "nodejs";
 
@@ -70,24 +75,60 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
-  // 4) 写入 announcements
+  // 4) 写入 announcements + 阶段 6（P2-001）：为所有 pet 生成 system_announce 事件（同一事务，
+  //    失败整体回滚）——让公告在时间线可见（“同步可见”广义闭环）。
+  //    事件 params 只存 announcement_id（P2-003），文案渲染时反查 announcements 表。
   const now = Date.now();
   const announcementId = newId();
+  let affectedPets = 0;
   try {
-    await insertAnnouncement({
-      id: announcementId,
-      title: body.title.trim(),
-      body: body.body.trim(),
-      level: body.level ?? "info",
-      publishedAt: now,
-      authorHubId: env.HUB_ID,
-      signature: null, // MVP 无联邦广播
-      expiresAt: body.expiresAt ?? null,
-      schemaVersion: "1.0.0",
-      hubId: env.HUB_ID,
+    affectedPets = await withTransaction(async (conn) => {
+      await insertAnnouncement(
+        {
+          id: announcementId,
+          title: body.title.trim(),
+          body: body.body.trim(),
+          level: body.level ?? "info",
+          publishedAt: now,
+          authorHubId: env.HUB_ID,
+          signature: null, // MVP 无联邦广播
+          expiresAt: body.expiresAt ?? null,
+          schemaVersion: "1.0.0",
+          hubId: env.HUB_ID,
+        },
+        conn
+      );
+
+      // 全量 pet 快照（MVP 规模；仅取生成器需要的字段）
+      const petRows = await connQuery<{
+        id: string;
+        user_id: string;
+        name: string;
+        state: string;
+        hub_id: string;
+      }>(conn, "SELECT id, user_id, name, state, hub_id FROM pets", []);
+
+      for (const row of petRows) {
+        const petLike = {
+          id: row.id,
+          userId: row.user_id,
+          name: row.name,
+          state: row.state,
+          hubId: row.hub_id,
+        } as unknown as Pet;
+        const { event } = generateSystemAnnounce({
+          pet: petLike,
+          announcementId,
+          memories: [],
+          ts: now,
+          hubId: env.HUB_ID,
+        });
+        await insertEvent(event, conn);
+      }
+      return petRows.length;
     });
   } catch (err) {
-    console.error(`[announcements/admin] insert failed:`, err);
+    console.error(`[announcements/admin] insert failed（已回滚）:`, err);
     return NextResponse.json({ error: "公告发布失败" }, { status: 500 });
   }
 
@@ -114,6 +155,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     ok: true,
     id: announcementId,
     publishedAt: now,
+    affectedPets,
   });
 }
 

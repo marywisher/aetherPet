@@ -70,9 +70,9 @@ export function _resetPool(): void {
 
 /** 事务包装器：自动 commit / rollback / release */
 export async function withTransaction<T>(
-  fn: (conn: PoolConnection) => Promise<T>
+  fn: (conn: PoolConnection) => Promise<T>,
+  pool: Pool = getPool()
 ): Promise<T> {
-  const pool = getPool();
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();

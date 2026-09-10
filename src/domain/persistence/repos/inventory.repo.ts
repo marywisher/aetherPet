@@ -52,10 +52,11 @@ function rowToInventory(row: InventoryRow): Inventory {
 }
 
 export async function insert(
-  data: Omit<Inventory, "id" | "acquiredAt" | "schemaVersion" | "hubId"> & { id: string; schemaVersion: string; hubId: string },
+  data: (Omit<Inventory, "id" | "acquiredAt" | "schemaVersion" | "hubId"> & { id: string; schemaVersion: string; hubId: string }) & { acquiredAt?: number },
   conn?: PoolConnection
 ): Promise<Inventory> {
-  const now = Date.now();
+  // 阶段 6：导入恢复需要保留原始 acquired_at
+  const now = data.acquiredAt ?? Date.now();
   const sqlText = `INSERT INTO inventory
     (id, user_id, pet_id, item_id, acquired_at, acquired_via,
      granted_event_id, offered_at, offered_event_id,

@@ -2,24 +2,34 @@ import type { NextConfig } from "next";
 
 /**
  * 文件名称：next.config.ts
- * 功能描述：Next.js 配置（P2-008：显式界定素材包 trace 范围）
- * 修订：Round 2 P2-008 —— 通过 outputFileTracingIncludes 把 /packs/* 路由
- *   的文件系统 trace 收敛到 src/assets/packs/，防止因 loader 里 fs.* 调用
- *   触发 "whole project traced" 告警（阶段 6 standalone 部署体积膨胀风险）。
+ * 功能描述：Next.js 配置
+ * 修订：
+ *   - P2-008（阶段 2）：outputFileTracingIncludes 把 /packs/* 路由的 fs trace
+ *     收敛到 src/assets/packs/，防止 loader 里 fs.* 调用触发 whole-project trace
+ *   - 阶段 6：output: "standalone"（自托管/宝塔 pm2 部署用）；
+ *     * 通配把 migrations/*.sql 与素材包目录纳入 standalone 产物——
+ *     它们由 runner/loader 在运行时按相对路径读取，缺了会启动失败或回退。
+ * 说明：next.config.ts 不读取 process.env 之外的运行时状态。
  */
 
 const nextConfig: NextConfig = {
-  /* 让 standalone 产物只打包 src/assets/packs 而非整个 src/ */
+  /* 阶段 6 部署：产出 .next/standalone 自包含服务器（PM2 / Docker 均可用） */
+  output: "standalone",
+
+  /* 把运行时按路径读取的目录纳入 standalone trace（保持相对路径不变）：
+     - src/domain/persistence/migrations/*.sql（migration runner 按
+       process.cwd()/src/domain/persistence/migrations 读取）
+     - src/assets/packs/**（素材包 loader 按 PROJECT_ROOT/src/assets/packs 读取） */
   outputFileTracingIncludes: {
+    "*": [
+      "src/domain/persistence/migrations/**/*.sql",
+      "src/assets/packs/**/*",
+    ],
     "/packs/*": ["src/assets/packs/**/*"],
   },
-  /* P2-008 附加：把 src/ 其它目录显式排除（若 trace 试图外扩） */
+  /* P2-008 附加：把可执行代码外的噪音排除（.env / 日志不进入产物） */
   outputFileTracingExcludes: {
-    "/packs/*": [
-      // 排除 node_modules 里的调试信息、.env、临时文件
-      "**/.env*",
-      "**/*.log",
-    ],
+    "*": ["**/.env*", "**/*.log", "**/.DS_Store"],
   },
 };
 

@@ -23,12 +23,12 @@ aetherPet 被设计为**一个开源生态**，而不是一个封闭应用：
 
 | 阶段 | 模块 | 状态 |
 |------|------|------|
-| 1 | 地基 · 邮箱验证码登录 · 素材包加载 | ✅ 完成（质检通过） |
-| 2 | pet 状态机 · 事件引擎 · 契约定稿 | 🔜 下一个 |
-| 3 | 补算 · 退避 · 时间线 UI | 待开发 |
-| 4 | 每日馈赠 + 回信 | 待开发 |
-| 5 | 公告 + 档案页 | 待开发 |
-| 6 | 导出/导入 · 部署 · 性能冒烟 | 待开发 |
+| 0–1 | 需求评审 · 架构设计 · 地基 · 认证 · 素材包加载 | ✅ |
+| 2 | pet 状态机 · 事件引擎 · 契约定稿 v1.0.1 | ✅ |
+| 3 | 补算 · 退避 · 时间线 UI | ✅ |
+| 4 | 每日馈赠 + 回信 | ✅ |
+| 5 | 公告 + 档案页 | ✅ |
+| 6 | 导出/导入 · 部署 · 性能冒烟 | 🔜 当前 |
 
 完整规划见 [`docs/dev-stage-plan.md`](docs/dev-stage-plan.md)，MVP 规格见 [`docs/requirements.md`](docs/requirements.md)。
 
@@ -66,6 +66,23 @@ npm run typecheck # tsc --noEmit
 npm run build     # 生产构建
 ```
 
+## 部署（生产）
+
+aetherPet 产出 Next.js `standalone` 单进程服务，自托管有两条路径（详见 [`docs/SELF_HOST.md`](docs/SELF_HOST.md)）：
+
+- **路径 a（宝塔面板）**：Apache/Nginx 反代 → `127.0.0.1:3000`，PM2 守护（`pm2 start pm2-ecosystem.config.js`），MySQL 用宝塔实例
+- **路径 b（Docker Compose）**：`docker compose -f docker/docker-compose.yml up -d --build`（app + mysql 两容器）
+
+辅助脚本：
+
+```bash
+npm run build            # 产出 .next/standalone
+npm run smoke            # 性能冒烟（DB 不可达时用 npm run smoke:skip-db）
+npm run backup           # mysqldump 备份 → data/backups/*.sql.gz
+```
+
+生产环境变量模板见 `.env.example`；上线前务必完成 `docs/SELF_HOST.md` §8 安全清单。
+
 ## 日志
 
 服务端按日轮转文件日志（`logs/YYYY-MM-DD.log`）：
@@ -87,6 +104,8 @@ npm run build     # 生产构建
 | [`docs/architecture.md`](docs/architecture.md) | 架构设计（事件-素材契约、补算、部署） |
 | [`docs/database-schema.md`](docs/database-schema.md) | MySQL DDL 与索引设计 |
 | [`docs/dev-stage-plan.md`](docs/dev-stage-plan.md) | 6 阶段开发计划与验收矩阵 |
+| [`docs/SELF_HOST.md`](docs/SELF_HOST.md) | 自托管部署指南（宝塔 + Docker 双路径） |
+| [`docs/packs-contract.md`](docs/packs-contract.md) | 事件-素材契约 v1.0.1（冻结） |
 | [`docs/asset-prompts.md`](docs/asset-prompts.md) | 手绘素材包产出示意词（即梦用） |
 
 ## 参与共建

@@ -1,0 +1,81 @@
+# aetherPet CI：类型检查 + 单测 + API 集成测试（临时 MySQL）+ 性能冒烟 + 构建
+# 说明：阶段 6 补齐「API 层零集成测试」缺口——本工作流用 GitHub Actions 的
+#       MySQL service 拉一个临时 MySQL 8 容器，跑 tests/integration 全量用例。
+
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    name: typecheck + unit + integration + smoke + build
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: aetherpet_ci
+          MYSQL_USER: aetherpet
+          MYSQL_PASSWORD: aetherpet_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 类型检查
+        run: npm run typecheck
+
+      - name: Lint（生产代码；测试目录有历史 any 债，CI 不阻塞测试文件）
+        run: npx eslint src
+
+      - name: 单元测试（含导出/导入领域层）
+        run: npm test
+        env:
+          SMTP_DRY_RUN: "true"
+
+      - name: API 集成测试（临时 MySQL）
+        run: npx vitest run tests/integration
+        env:
+          INTEGRATION_DB: "1"
+          DB_HOST: 127.0.0.1
+          DB_PORT: "3306"
+          DB_USER: aetherpet
+          DB_PASS: aetherpet_ci
+          DB_NAME: aetherpet_ci
+          DB_AUTO_MIGRATE: "true"
+
+      - name: 性能冒烟（含真实 MySQL 连接池 + 补算基准）
+        run: npx tsx scripts/smoke-test.ts --server http://localhost:9999
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: "3306"
+          DB_USER: aetherpet
+          DB_PASS: aetherpet_ci
+          DB_NAME: aetherpet_ci
+        continue-on-error: true # 健康检查需 server，DB 部分仍会执行
+
+      - name: 构建（standalone）
+        run: npm run build
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: "3306"
+          DB_USER: aetherpet
+          DB_PASS: aetherpet_ci
+          DB_NAME: aetherpet_ci

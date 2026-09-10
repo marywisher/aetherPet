@@ -1,0 +1,16 @@
+/* aetherPet 备用素材包 · morning · theme.css */
+/* 开发者模式切换验证用：冷色系晨光风格，与 default 的暖调形成明显视觉差异 */
+
+:root {
+  --pack-primary: #7fb3d5;
+  --pack-accent: #8e7cc3;
+  --pack-memory-ref: #a1c4e6;
+  --pack-paper: #f4f7fa;
+  --pack-ink: #243447;
+
+  --pack-font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
+  --pack-font-title: "Songti SC", "STSong", "SimSun", serif;
+
+  --pack-radius: 12px;
+  --pack-shadow: 0 2px 8px rgba(36, 52, 71, 0.1);
+}

@@ -31,6 +31,7 @@ import { renderEvent, type TextSlotTemplate } from "@/domain/events/render";
 import { loadPackByName } from "@/domain/packs/loader";
 import { getPool } from "@/domain/persistence/db";
 import { queryOne } from "@/domain/persistence/sql";
+import { buildAnnouncePlaceholderMap, withAnnouncePlaceholders } from "@/lib/render-announce";
 
 export async function GET(req: Request): Promise<NextResponse> {
   // 1) 鉴权（Bearer + cookie 双模式，沿用项目惯例）
@@ -77,9 +78,16 @@ export async function GET(req: Request): Promise<NextResponse> {
   const events = await findEvents(pet.id, limit, offset);
   const pack = await loadPackByName(pet.activePackName ?? "default");
 
+  // 4.1) 阶段 6（P2-001）：system_announce 事件渲染前反查公告（params 只存 id）
+  const announcePlaceholders = await buildAnnouncePlaceholderMap(events);
+
   const renderedEvents = events.map((e) => {
     const packText = pack?.texts[e.type] as TextSlotTemplate | undefined;
-    const rendered = renderEvent(e, packText ?? null, pet.name);
+    const eForRender =
+      e.type === "system_announce"
+        ? withAnnouncePlaceholders(e, announcePlaceholders.get(String(e.params.announcement_id ?? "")))
+        : e;
+    const rendered = renderEvent(eForRender, packText ?? null, pet.name);
     return { event: e, rendered };
   });
 
@@ -99,9 +107,16 @@ export async function GET(req: Request): Promise<NextResponse> {
   let latestAggregate = null;
   if (latestAggregateEvent) {
     const packText = pack?.texts[latestAggregateEvent.type] as TextSlotTemplate | undefined;
+    const aggForRender =
+      latestAggregateEvent.type === "system_announce"
+        ? withAnnouncePlaceholders(
+            latestAggregateEvent,
+            announcePlaceholders.get(String(latestAggregateEvent.params.announcement_id ?? ""))
+          )
+        : latestAggregateEvent;
     latestAggregate = {
       event: latestAggregateEvent,
-      rendered: renderEvent(latestAggregateEvent, packText ?? null, pet.name),
+      rendered: renderEvent(aggForRender, packText ?? null, pet.name),
     };
   }
 

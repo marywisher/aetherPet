@@ -122,7 +122,14 @@ export function buildList(input: ListInput): ListOutput {
     now,
   });
 
-  return { items, unreadCount, mutedCount, aggregation };
+  // P2-002：主列表隐藏已聚合项（仅暴露到聚合卡片下的次级列表）
+  const aggregatedIds = aggregation?.aggregatedIds ?? [];
+  const visibleItems = items.filter((it) => !aggregatedIds.includes(it.announcement.id));
+  const aggregatedItems = aggregation
+    ? items.filter((it) => aggregatedIds.includes(it.announcement.id))
+    : [];
+
+  return { items: visibleItems, unreadCount, mutedCount, aggregation, aggregatedIds, aggregatedItems };
 }
 
 // ============================================================

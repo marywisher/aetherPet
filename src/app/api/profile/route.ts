@@ -14,6 +14,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { findByUserId, findById as findPetById } from "@/domain/persistence/repos/pets.repo";
+import { findById as findUserById } from "@/domain/persistence/repos/users.repo";
 import { findByPetId as findMemoriesByPetId } from "@/domain/persistence/repos/memories.repo";
 import { findOfferedByPet } from "@/domain/persistence/repos/inventory.repo";
 import { getPool } from "@/domain/persistence/db";
@@ -36,10 +37,19 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 2) 加载 pet
-  const pets = await findByUserId(auth.userId);
+  // 2) 加载 pet + 账号元数据（阶段 6：申诉展示用）
+  const [pets, user] = await Promise.all([
+    findByUserId(auth.userId),
+    findUserById(auth.userId),
+  ]);
   if (pets.length === 0) {
-    return NextResponse.json({ ok: true, pet: null });
+    return NextResponse.json({
+      ok: true,
+      pet: null,
+      emailHash: user?.emailHash ?? null,
+      lastBackupHash: user?.lastBackupHash ?? null,
+      createdAt: user?.createdAt ?? null,
+    });
   }
   const pet = pets[0];
 
@@ -53,7 +63,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const storage = await findOfferedByPet(pet.id, 30);
 
   // 5) 事件计数（按 type 分组，供档案页摘要）
-  let eventCountsByType: Record<string, number> = {};
+  const eventCountsByType: Record<string, number> = {};
   let totalEvents = 0;
   try {
     const rows = await query<EventCountsRow>(
@@ -71,6 +81,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   return NextResponse.json({
     ok: true,
+    // 阶段 6（验收 #11 申诉）：暴露账号级元数据（邮箱 hash / 最近备份 hash / 创建时间）
+    emailHash: user?.emailHash ?? null,
+    lastBackupHash: user?.lastBackupHash ?? null,
+    createdAt: user?.createdAt ?? null,
     pet: {
       id: pet.id,
       name: pet.name,

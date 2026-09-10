@@ -1,0 +1,27 @@
+{
+  "title": { "mode": "fixed", "default": "{pet_name}" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "树叶落了一地，我数到 {count} 片就晕了",
+        "今天风大，数到第 {count} 片时被吹走了重来",
+        "数到 {count} 片就停，剩下的明天再说",
+        "{pet_name} 今天在数叶子，数到 {count} 就放弃了",
+        "我把数到 {count} 的叶子摆成一排给你看",
+        "{count} 片叶子飘过窗前，一片都没等我",
+        "从早数到晚，一共 {count} 片，我有点自豪",
+        "数到一半打了个喷嚏，{count} 片的记录就此作罢"
+      ],
+      "poetic": [
+        "{count} 片叶子是秋天的信，我逐字读完才回头",
+        "它们落下来的样子很像 {recall_line}",
+        "我把 {count} 片叶子叠在一起，就够写一封薄薄的信了"
+      ]
+    },
+    "poetic_ratio": 0.1
+  },
+  "sign_off": { "mode": "fixed", "default": "—— {pet_name}" },
+  "recall_required": ["time_anchor"],
+  "recall_min_count": 0
+}
