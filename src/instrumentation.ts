@@ -17,6 +17,4 @@ export async function register(): Promise<void> {
   void startup();
 }
 
-export const config = {
-  runtime: "nodejs",
-};
+export const runtime = "nodejs";

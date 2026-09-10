@@ -58,10 +58,47 @@
 
 ---
 
-### 阶段 2：pet 状态机 + 事件引擎 + 契约定稿（stage-2）← 当前阶段
-**开始时间**：2026-09-09
-**前置依赖**：阶段 1（已完成并提交）
-**内容**：事件引擎 + 9+2 生成器、记忆检索、事件-素材契约定稿（docs/packs-contract.md）、契约评审会
+### 阶段 2：pet 状态机 + 事件引擎 + 契约定稿（stage-2）
+**完成时间**：2026-09-10（提交 `776a6cc feat(stage-2)`）
+**阶段产出**：
+- `src/domain/fsm/`、`src/domain/events/`（11 生成器+engine+render）、`src/domain/memory/`（加权抽样+时间锚点）
+- `docs/packs-contract.md` v1.0.1 冻结（事件-素材契约）
+- `docs/current-stage.md` 更新为阶段 3；`docs/pitfalls.md` 新增阶段 2 条目
+- 新 API：/api/pet/generate-event（dev 白名单）、/api/pet/timeline；事件卡片 UI
+- 259 单测全过；CONTRIBUTING.md 贡献指南（GFI/HW 任务清单）；README 双版更新
+
+**关键决策**：
+1. 契约冻结 v1.0.1 + contract-vs-schema 回归防护测试（契约与 TS 类型互相校验）
+2. 记忆引用名字率实现 ≥50%（超出需求 30%）；poetic 抽样 10%
+3. 用户手动删除需求溯源对话 JSON；提交含用户暂存内容
+
+**遗留问题**：
+- P2-006：MemoryRef.kind 语义扩展（不做，待阶段 5 档案页时随契约 bump）
+- Edge Runtime 警告（阶段 6 修）；Docker 集成实测未执行（待阶段 6 CI）
+
+---
+
+### 阶段 3：补算 + 退避 + 事件流 UI（stage-3）
+**完成时间**：2026-09-10（待提交）
+**阶段产出**：
+- `src/domain/catchup/`（planner ≤20 条+聚合+executor async 事务+aggregator）、`src/domain/backoff/`（1→3→7→30 天表）、`src/config/backoff-table.ts`
+- `GET /api/sync`、`src/app/(pet)/timeline/`（渐进披露+类型标签+记忆高亮+状态徽章+分页）
+- 355 单测全过（+96）；typecheck 0 错误；build exit 0（17 路由）
+
+**关键决策**：
+1. 质检轮 P0/P1=0；3 处 P2 由主 agent 手修（注释修正、入口卡片 eventCount 精确化、repo 死代码清理）
+2. Edge Runtime 噪音：healthz/instrumentation 加 runtime="nodejs" 声明，build exit 0 确认可用
+3. 链 429 限流 → 改单步串行 + P2 手修策略（已记 pitfalls）
+
+**遗留问题**：
+- P3×6 轻量项（延后阶段 6 / GFI）；Docker 集成实测待阶段 6 CI
+
+---
+
+### 阶段 4：每日馈赠 + 回信（stage-4）← 当前阶段
+**开始时间**：2026-09-10
+**前置依赖**：阶段 3（退避调度、/api/sync、回信生成器）
+**核心内容**：物品池 ≥8 种、首次登录奖励、赠送日限一次、24h 回信含记忆引用、物品栏 UI、退避联动
 
 ---
 

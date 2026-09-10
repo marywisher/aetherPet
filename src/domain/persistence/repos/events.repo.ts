@@ -191,5 +191,4 @@ export async function insertInTransaction(events: Event[], conn: PoolConnection)
   for (const e of events) {
     await insert(e, conn);
   }
-  void connQuery;
 }

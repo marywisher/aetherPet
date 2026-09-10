@@ -22,6 +22,9 @@ import { loadSmtpConfig, isSmtpConfigured } from "@/domain/auth/smtp-config";
 import { getEnv } from "@/config/env";
 import { startup, getStartupState, startupReady, shouldProbeRecovery } from "@/lib/startup";
 
+export const runtime = "nodejs";
+
+
 /**
  * 启动就绪等待超时。
  * 3 次退避（300+600+1200ms） × 3 个子步骤（initPool/migration/hub identity）最坏 8400ms，

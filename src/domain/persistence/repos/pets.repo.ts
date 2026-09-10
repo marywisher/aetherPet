@@ -5,7 +5,7 @@
  */
 
 import { getPool } from "../db";
-import { query, queryOne, execute } from "../sql";
+import { query, queryOne, execute, connExecute } from "../sql";
 import { getEnv } from "@/config/env";
 import type { Pet, PetState } from "../../types";
 
@@ -141,5 +141,39 @@ export async function updateState(
     pool,
     "UPDATE pets SET state = ?, state_since = ?, updated_at = ? WHERE id = ?",
     [state, stateSince, ts, petId]
+  );
+}
+
+/**
+ * 事务内更新 pet：state + state_since + last_activity_ts + user_last_active_ts + updated_at。
+ *
+ * 语义（补算 executor 在事务尾部调用）：
+ *   - state / state_since：补算期间 FSM 推进后的最终状态
+ *   - last_activity_ts = activityTs：补算把"缺席期"补齐，pet 的 last_activity 更新到同步时间
+ *   - user_last_active_ts = activityTs：本次同步即用户活跃（配合 backoff 计算缺席时长）
+ *   - updated_at = Date.now()：审计字段
+ *
+ * 事务性（P1 修复不变式）：
+ *   - 补算的整体 INSERT 事件 + 本 UPDATE 必须在同一事务内，中途失败整体 rollback
+ *   - 严禁"先 UPDATE pets 再 INSERT 事件"的顺序：否则若 INSERT 失败会留下半份状态
+ *
+ * @param conn 事务连接（必填；本函数不做独立事务）
+ * @param petId 目标 pet
+ * @param state 补算后的 FSM 状态
+ * @param stateSince 状态最近一次变更的时间（UTC ms）
+ * @param activityTs 同步时间戳（同时写入 last_activity_ts 与 user_last_active_ts）
+ */
+export async function updateStateAndActivityInTx(
+  conn: import("mysql2/promise").PoolConnection,
+  petId: string,
+  state: PetState,
+  stateSince: number,
+  activityTs: number
+): Promise<void> {
+  await connExecute(
+    conn,
+    `UPDATE pets SET state = ?, state_since = ?, last_activity_ts = ?,
+      user_last_active_ts = ?, updated_at = ? WHERE id = ?`,
+    [state, stateSince, activityTs, activityTs, Date.now(), petId]
   );
 }

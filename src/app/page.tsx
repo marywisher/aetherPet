@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ThemeProvider, useTheme } from "@/ui/theme-provider";
 import { EventCard } from "@/ui/event-card";
+import { TimelineEntryCard } from "@/ui/timeline";
 import type { EventTypeValue, PetState } from "@/domain/types";
 import type { RenderedText } from "@/domain/events/render";
 
@@ -20,6 +21,9 @@ interface TimelineItem {
     type: EventTypeValue;
     ts: number;
     fsmState: PetState;
+    isAggregate?: boolean;
+    aggregateSpanDays?: number | null;
+    memoryRefs?: Array<{ kind: string; value: string }>;
   };
   rendered: RenderedText;
 }
@@ -28,6 +32,11 @@ interface TimelineResponse {
   ok: boolean;
   pet: { id: string; name: string; state: PetState } | null;
   events: TimelineItem[];
+  total?: number;
+  latestAggregate?: {
+    event: { ts: number; type: EventTypeValue; aggregateSpanDays?: number | null };
+    rendered: RenderedText;
+  } | null;
 }
 
 const FORCE_TYPES: EventTypeValue[] = [
@@ -47,11 +56,17 @@ function HomeInner() {
   const [events, setEvents] = useState<TimelineItem[]>([]);
   const [generating, setGenerating] = useState(false);
   const [devTip, setDevTip] = useState<string | null>(null);
+  // 渐进披露入口卡片数据（阶段 3 新增；来自 /api/pet/timeline 的 latestAggregate）
+  const [aggregateEntry, setAggregateEntry] = useState<{
+    spanDays: number;
+    eventCount: number;
+    summary: RenderedText | null;
+  } | null>(null);
   const { packDisplayName, packName } = useTheme();
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch("/api/pet/timeline", { cache: "no-store" });
+      const res = await fetch("/api/pet/timeline?total=1", { cache: "no-store" });
       if (res.status === 401) {
         router.push("/login");
         return;
@@ -65,6 +80,16 @@ function HomeInner() {
       setPetName(data.pet.name);
       setPetState(data.pet.state);
       setEvents(data.events);
+      // 渐进披露入口卡片：若存在聚合摘要事件，展示"过去 X 天"入口
+      if (data.latestAggregate && data.latestAggregate.event.aggregateSpanDays) {
+        setAggregateEntry({
+          spanDays: data.latestAggregate.event.aggregateSpanDays,
+          eventCount: data.total ?? Math.max(data.events.length, 1),
+          summary: data.latestAggregate.rendered,
+        });
+      } else {
+        setAggregateEntry(null);
+      }
     } catch {
       // ignore
     } finally {
@@ -140,6 +165,16 @@ function HomeInner() {
         <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
           最近发生的事
         </h2>
+        {/* 渐进披露入口卡片（阶段 3 验收 #4：30 天场景首屏出现聚合摘要 + 入口卡片） */}
+        {aggregateEntry && (
+          <TimelineEntryCard
+            petName={petName ?? ""}
+            spanDays={aggregateEntry.spanDays}
+            eventCount={aggregateEntry.eventCount}
+            summary={aggregateEntry.summary}
+            onExpand={() => router.push("/timeline")}
+          />
+        )}
         {events.length === 0 ? (
           <div className="text-sm p-6 text-center rounded-lg" style={{ color: "var(--muted)", background: "var(--pack-paper)" }}>
             还没有事件。点击"触发一次随机事件"生成。
@@ -154,6 +189,13 @@ function HomeInner() {
             />
           ))
         )}
+        <a
+          href="/timeline"
+          className="block text-center text-xs underline py-2 rounded"
+          style={{ color: "var(--pack-primary)", background: "var(--pack-paper)" }}
+        >
+          查看全部时间线 →
+        </a>
       </section>
 
       {/* 开发工具区（仅非生产模式） */}

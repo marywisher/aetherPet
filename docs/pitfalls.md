@@ -54,23 +54,47 @@
 
 ### [2026-09-09] Next.js 16 构建期 Edge Runtime 告警（fs/path 依赖）
 
-**阶段**：阶段 1 开发
+**阶段**：阶段 1 开发（阶段 3 补充）
 
 **问题描述**：
-`next build` 时 4 处 Route（healthz 等）报 `A Node.js module is loaded ('path'/'fs'/'crypto') which is not supported in the Edge Runtime` 警告。构建成功但属隐患，部署时可能更严格。
+`next build` 时 4 处 Route（healthz 等）报 `A Node.js module is loaded ('path'/'fs'/'crypto') which is not supported in the Edge Runtime` 警告。构建成功但属隐患。阶段 3 构建中同类信息出现 6 条（instrumentation 静态分析），仍 exit 0。
 
 **根因分析**：
-Next.js 16 Turbopack 构建时会自动推断 Route Runtime；API route 的 import 链依赖 Node-only 模块（fs/path/crypto）时给出静态分析警告，但产物仍以 Node Runtime 运行。
+Next.js 16 Turbopack 构建时会自动推断 Route/Instrumentation Runtime；Node-only 模块（fs/path/crypto，含 logger 的 node:fs）触发 Edge 兼容性检查信息。健康检查/启动链必然依赖这些模块，所以信息必然存在。
 
 **修复方案**：
-（阶段 6 部署前必修）在相关 route 顶部加 `export const runtime = "nodejs"` 显式声明；或将 `startup.ts` 移入 `src/server-only/` 由 Next 自动归类。
+（阶段 3 部分解决）`healthz/route.ts` 与 `instrumentation.ts` 均已加 `export const runtime = "nodejs"`，构建 exit 0、产物正常。剩余信息为 Turbopack 对 instrumentation 的编译期静态分析噪音，不影响产物。
 
 **预防措施**：
-新增 API route 时若依赖 Node 内置模块，第一时间声明 `runtime = "nodejs"`；构建日志中 Edge Runtime 警告为零再提交。
+新增 API route 时若依赖 Node 内置模块，第一时间声明 `runtime = "nodejs"`；部署前（阶段 6）用 `output: standalone` 验证，忽略编译期噪音以 exit code 与产物为准。
 
 **标签**：`技术`
 
-**状态**：`待验证`（阶段 6 修复后闭环）
+**状态**：`已闭环`（构建可用；噪音为已知无害）
+
+---
+
+### [2026-09-10] 开发链限流中断：连续多 agent 调用触发 429
+
+**阶段**：阶段 3 开发
+
+**问题描述**：
+阶段 3 开发链首次运行在第 2 步（质检）和第 4 步（工程师修复）连续触发 `429 inference exceeds tpm/rpm limit`，链中断。
+
+**根因分析**：
+链内每一步都是大上下文模型调用（领域代码 + 多文档 reads），连续执行在短时间内超出 API 的 tokens-per-minute 限制；特别是首步工程师开发消耗大量上下文后，立刻接质检调用更容易触顶。
+
+**修复方案**：
+改为「单步串行 + 间隔执行」：每次只调用一个 agent，完成后再调用下一个；质检确认 P0/P1=0 后，P2 小问题由主 agent 直接手修（本轮 3 处 P2 手修 + 验证），不再等待完整链。
+
+**预防措施**：
+- 阶段链启动前评估任务体量，大阶段拆分或减短 chain（质检→修复→终检三段即可）
+- 链中断时优先检查步骤产物是否已落盘（开发可能已完成），再决定续跑还是单步
+- P2 级别问题可由主 agent 手修并跑全量测试验证，不必每次都启动修复链
+
+**标签**：`流程`
+
+**状态**：`已闭环`
 
 ---
 
@@ -96,6 +120,112 @@ Next.js 16 Turbopack 构建时会自动推断 Route Runtime；API route 的 impo
 
 ---
 
+### [2026-09-10] 阶段 2 质检：死代码与契约/实现不一致（P2-007/012、P3-001）
+
+**阶段**：阶段 2 开发
+
+**问题描述**：
+Round 1 质检发现：① `anchoring.ts` 有 3 个不可达分支（daysAgo<=9/<=14/else）与 _now 死变量；② 契约文档 `aggregate_summary` 的 recall_min_count=0 与代码 nameForceProb=1 矛盾；③ 3 个生成器有 `void X;` 死代码；④ engineering 交付物 current-stage.md 文案数与实际不符。
+
+**根因分析**：
+①③ 是「重构后未清理」的经典技术债——时间锚点算法改成 1..6 四种表达后旧分支残留；
+② 是「契约文档与实现逐字逐句对齐检查」缺失——实现改了、文档没同步；
+④ 是人工统计口径漂移（121 条 vs 实际 113 条）。
+
+**修复方案**：
+删除不可达分支/死变量/未用 import；契约 §5 改为 recall_min_count=1 并加「Round 2 已对齐」注释；建立 `contract-vs-schema.test.ts`（10 用例）作为契约↔代码回归防护，从此契约文档与 TS 类型互相校验。
+
+**预防措施**：
+- 任何重构同时清理死代码（用 eslint no-unused / `void X` grep 前置检查）
+- 契约类文档修改后，必须跑「契约 vs 实现」一致性测试
+- 文案/统计数字必须在质检出报告前复核，不直接采信人工估计
+
+**标签**：`技术`
+
+**状态**：`已闭环`
+
+---
+
 ## 跨项目可复用清单
 
 <pending>
+
+---
+
+### [2026-09-10] 阶段 3：aggregate_summary "聚合参数"合成 vs 真实统计
+
+**阶段**：阶段 3 开发
+
+**问题描述**：
+补算聚合摘要（`aggregate_summary`）要求 params 含 `outings` / `items_collected` / `travel_nights`（架构 §5.3）。但聚合事件替换的是省略事件——这些事件不存在于 DB，没有真实数据可统计。若强行"统计"会产生空值，导致 pack 模板渲染失败或展示"出门 0 次"的荒谬摘要。
+
+**根因分析**：
+架构文档定义了 params schema 但未说明"数据从哪来"。阶段 2 的 aggregate 生成器（`aggregate-summary.ts`）接受 params 作为输入，但补算场景下 executor 需要自己生成 params。这是"契约定义数据形状、但没定义数据来源"的典型模糊地带。
+
+**修复方案**：
+`aggregator.ts` 新增 `synthesizeAggregateParams(spanDays, rng)`：
+- 用 seeded RNG 每天 50% 概率合成 outing 次数（最少 1 次，最多 spanDays）
+- 用 seeded RNG 每天 35% 概率合成 items_collected（type 从固定池随机、count 1-3）
+- travel_nights 恒 0（MVP 无旅行玩法，与架构 §12 一致）
+- 确定性：同 spanDays + 同 seed → 相同 params（可复现，便于测试与调试）
+
+**预防措施**：
+- 契约文档定义 params schema 时，必须同步说明"数据来源"（真实统计 vs 合成 vs 外部输入）
+- 聚合类事件（替换省略事件）的 params 合成策略需在架构文档 §5 显式标注，避免实现时反复摸索
+
+**标签**：`技术`
+
+**状态**：`已闭环`
+
+---
+
+### [2026-09-10] 阶段 3："每天来"退避间隔的语义歧义
+
+**阶段**：阶段 3 开发
+
+**问题描述**：
+CONTEXT.md 退避表首行"每天来"无具体间隔值。若解读为"1 天"，则近 24h 内访问的用户下次主动触达设为 1 天后——但用户每天来，间隔应为 0（保持当前频率）。若解读为"不限"，则前端无法计算 nextProactiveTs。
+
+**根因分析**：
+"每天来"是口语化描述，未用结构化表达。退避表本质是"缺席时长 → 下次间隔"的映射，但"每天来"行的缺席时长是 0，间隔未明确。
+
+**修复方案**：
+`BackoffBand` 接口新增 `minAbsenceHours`（而非 `minAbsenceDays`），避免 0 天与 1 天的歧义。"每天来"行 `intervalMs = null`，语义为"保持当前频率"（不设具体间隔，nextProactiveTs = null）。前端收到 null 时展示"随时可见"而非具体日期。
+
+**预防措施**：
+- 表格类配置用结构化字段（`minX` / `maxX` / `intervalMs`），禁止口语化描述
+- `null` 语义在接口文档中显式定义（"null = 不适用/保持当前"而非"缺失"）
+
+**标签**：`技术`
+
+**状态**：`已闭环`
+
+---
+
+### [2026-09-10] 阶段 3：补算事件 ts 分布与聚合 ts 顺序的非对称性
+
+**阶段**：阶段 3 开发
+
+**问题描述**：
+补算 planner 将离线窗口分为"近期 7 天"（生成常规事件）与"旧期"（生成聚合摘要）。常规事件 ts 在 `[recentStart, toTs]` 均匀分布，聚合事件 ts = `recentStart`（旧期末尾）。这意味着聚合事件 ts 早于最后一条常规事件——按 ts 升序插入时，聚合事件不在末尾。
+
+**根因分析**：
+架构文档 §3.4"聚合按时间序插入到时间线末尾"中的"末尾"有歧义：
+- 解读 A：时间线视觉末尾（最旧事件，列表底部）→ 聚合 ts 应早于常规事件 ✓
+- 解读 B：补算窗口末尾（最新事件，列表顶部）→ 聚合 ts 应等于 toTs
+
+渐进披露入口卡片要求聚合摘要在首屏顶部，但时间线按 ts 降序排列时，聚合事件（ts = toTs - 7d）会出现在常规事件（ts ≈ toTs）之后。
+
+**修复方案**：
+- 聚合 ts = `slot.toTs` = `recentStart`（旧期末尾），chronologically 正确
+- executor 按 plan 顺序插入（normal 先、aggregate 后），不强制 ts 升序
+- 时间线页通过 `findLatestAggregate` 单独查询聚合事件（不依赖 ts 排序），在入口卡片中展示
+- 事件流列表中，聚合事件出现在其 chronologically 正确的位置（常规事件之后）
+
+**预防措施**：
+- "时间线末尾/顶部"等空间隐喻在架构文档中必须用"ts 升/降序"或"列表位置"明确化
+- 渐进披露入口卡片与事件流列表解耦：入口卡片通过独立查询获取最新聚合事件，不依赖列表排序
+
+**标签**：`技术`
+
+**状态**：`已闭环`
