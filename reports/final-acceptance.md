@@ -30,6 +30,11 @@
 | 质检 | 阶段 6 独立 QA：P0/P1 = 0，评级「优」（`reports/qa-stage6.md`） |
 | 审计闭环 | 导出/导入/切包/公告发布/已读静音均落 audit_log（失败不阻断业务） |
 
+## 范围边界澄清（对齐需求正文，非验收项）
+
+- **§3.13 邮件推送（极端必要通道）**：MVP 仅实现「验证码邮件 + `email_sent` 审计」；主动推送（账号安全/故障/迁移/bug 通知）在白名单限定下未启用——11 项验收标准内无此项，需求 §4 Out-of-scope 亦未要求，属后续迭代项。
+- **多中心迁移**：schema 版本 + hub_id + 导入改写机制已从 MVP 预留（验收 #7 覆盖单中心导出/导入），联邦广播（Announcement.author_hub_id/signature 字段已就位）为 v2。
+
 ## 遗留说明（不影响验收，作为后续项）
 
 1. **真 MySQL 集成/E2E 本机未实跑**：本机 Docker 不可用；`.github/workflows/ci.yml` 已配 MySQL service，代码推送 GitHub 后自动补跑全部集成用例（`INTEGRATION_DB=1`）。
