@@ -1,0 +1,25 @@
+{
+  "type": "aggregate_summary",
+  "slots": {
+    "title": { "mode": "fixed", "default": "过去 {span_days} 天" },
+    "body": {
+      "mode": "template",
+      "variants": {
+        "daily": [
+          "过去 {span_days} 天，{pet_name} 出门走了 {outings} 次，收过 {items_collected}。",
+          "这 {span_days} 天，{pet_name} 走了 {outings} 趟，捡了几样东西。"
+        ],
+        "poetic": [
+          "{span_days} 天里，{pet_name} 走过 {outings} 段路。",
+          "时间的 {span_days} 天，是 {pet_name} 自己的。"
+        ]
+      },
+      "poetic_ratio": 0.10
+    },
+    "sign_off": { "mode": "template", "variants": ["— {pet_name}"] }
+  },
+  "assets": { "icon": "images/icons/aggregate.svg" },
+  "highlight": { "memory_refs": true, "anchor_style": "underline" },
+  "recall_required": ["pet_name", "time_anchor"],
+  "recall_min_count": 0
+}

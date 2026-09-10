@@ -1,0 +1,26 @@
+{
+  "type": "self_talk",
+  "slots": {
+    "title": { "mode": "fixed", "default": "{pet_name} 自言自语" },
+    "body": {
+      "mode": "template",
+      "variants": {
+        "daily": [
+          "{pet_name}：今天天气不错。",
+          "{pet_name}：想出去走走。",
+          "{pet_name}：{recall_line}"
+        ],
+        "poetic": [
+          "{pet_name} 小声对自己说：{recall_line}",
+          "今天，{pet_name} 在想一些没什么的事。"
+        ]
+      },
+      "poetic_ratio": 0.10
+    },
+    "sign_off": { "mode": "template", "variants": ["— {pet_name}"] }
+  },
+  "assets": { "icon": "images/icons/self-talk.svg" },
+  "highlight": { "memory_refs": true, "anchor_style": "underline" },
+  "recall_required": ["pet_name", "time_anchor"],
+  "recall_min_count": 0
+}

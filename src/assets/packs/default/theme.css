@@ -1,0 +1,21 @@
+/* aetherPet 默认素材包 · theme.css */
+/* 前端通过 <link> 或 CSS 变量注入 */
+
+:root {
+  --pack-primary: #e8a87c;
+  --pack-accent: #85c485;
+  --pack-memory-ref: #d4b483;
+  --pack-paper: #f6efe4;
+  --pack-ink: #3d2f23;
+
+  --pack-font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
+  --pack-font-title: "KaiTi", "STKaiti", "KaiTi SC", serif;
+
+  --pack-radius: 8px;
+  --pack-shadow: 0 2px 8px rgba(61, 47, 35, 0.08);
+}
+
+/* 应用层消费示例：
+ * .paper { background: var(--pack-paper); color: var(--pack-ink); }
+ * .memory-ref { background: var(--pack-memory-ref); padding: 0 2px; border-radius: 2px; }
+ */

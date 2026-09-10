@@ -1,0 +1,29 @@
+{
+  "type": "reply_letter",
+  "slots": {
+    "title": { "mode": "fixed", "default": "给 {pet_name} 的一封信" },
+    "body": {
+      "mode": "template",
+      "variants": {
+        "daily": [
+          "今天收到 {item}，{recall_line}。",
+          "{pet_name}，谢谢你送来的 {item}。",
+          "{recall_line} 谢谢你把这些都记在心上。"
+        ],
+        "poetic": [
+          "{pet_name}，你送来的 {item}，让我想起了 {recall_line}。",
+          "信到。{item} 已收。{recall_line}"
+        ]
+      },
+      "poetic_ratio": 0.10
+    },
+    "sign_off": { "mode": "template", "variants": ["— {pet_name}", "—— {pet_name}"] }
+  },
+  "assets": {
+    "letter_bg": "images/letter-bg.svg",
+    "icon": "images/icons/letter.svg"
+  },
+  "highlight": { "memory_refs": true, "anchor_style": "underline" },
+  "recall_required": ["item_name", "pet_name", "time_anchor"],
+  "recall_min_count": 1
+}

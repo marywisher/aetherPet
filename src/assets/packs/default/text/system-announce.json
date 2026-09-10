@@ -1,0 +1,24 @@
+{
+  "type": "system_announce",
+  "slots": {
+    "title": { "mode": "fixed", "default": "公告" },
+    "body": {
+      "mode": "template",
+      "variants": {
+        "daily": [
+          "{announcement_title}：{announcement_body}",
+          "服务中心告知：{announcement_body}"
+        ],
+        "poetic": [
+          "服务中心留了一句话：{announcement_body}"
+        ]
+      },
+      "poetic_ratio": 0.10
+    },
+    "sign_off": { "mode": "fixed", "default": "— 服务中心" }
+  },
+  "assets": { "icon": "images/icons/announce.svg" },
+  "highlight": { "memory_refs": false, "anchor_style": "underline" },
+  "recall_required": [],
+  "recall_min_count": 0
+}

@@ -1,0 +1,37 @@
+{
+  "name": "default",
+  "display_name": "官方默认（手绘暖调）",
+  "version": "1.0.0",
+  "pack_schema_version": "1.0.0",
+  "min_engine_version": "1.0.0",
+  "author": "aetherPet core team",
+  "license": "MIT",
+  "theme": {
+    "css": "theme.css",
+    "palette": {
+      "primary": "#e8a87c",
+      "accent": "#85c485",
+      "memory_ref": "#d4b483",
+      "paper": "#f6efe4",
+      "ink": "#3d2f23"
+    }
+  },
+  "assets": {
+    "home_bg": "images/home-bg.svg",
+    "letter_bg": "images/letter-bg.svg"
+  },
+  "texts": {
+    "outing": "text/outing.json",
+    "watching_water": "text/watching-water.json",
+    "counting_leaves": "text/counting-leaves.json",
+    "self_talk": "text/self-talk.json",
+    "brought_item": "text/brought-item.json",
+    "reply_letter": "text/reply-letter.json",
+    "spontaneous_letter": "text/spontaneous-letter.json",
+    "aggregate_summary": "text/aggregate-summary.json",
+    "system_announce": "text/system-announce.json",
+    "daily_grant": "text/daily-grant.json",
+    "offer_received": "text/offer-received.json"
+  },
+  "fallback": null
+}

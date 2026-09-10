@@ -1,0 +1,25 @@
+{
+  "type": "daily_grant",
+  "slots": {
+    "title": { "mode": "fixed", "default": "今日馈赠" },
+    "body": {
+      "mode": "template",
+      "variants": {
+        "daily": [
+          "今日馈赠：一件 {item}。",
+          "桌上多了一件 {item}，送给你。"
+        ],
+        "poetic": [
+          "今天的礼物：{item}。",
+          "{item}，放在桌上等你。"
+        ]
+      },
+      "poetic_ratio": 0.10
+    },
+    "sign_off": { "mode": "template", "variants": ["— 服务中心"] }
+  },
+  "assets": { "icon": "images/icons/gift.svg" },
+  "highlight": { "memory_refs": true, "anchor_style": "underline" },
+  "recall_required": ["item_name"],
+  "recall_min_count": 1
+}

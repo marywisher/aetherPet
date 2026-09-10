@@ -1,0 +1,25 @@
+{
+  "type": "brought_item",
+  "slots": {
+    "title": { "mode": "fixed", "default": "{pet_name} 带回了一件东西" },
+    "body": {
+      "mode": "template",
+      "variants": {
+        "daily": [
+          "{pet_name} 带回了一件 {item}。",
+          "桌上多了一件 {item}，{pet_name} 说是路上捡的。"
+        ],
+        "poetic": [
+          "{item}，是 {pet_name} 从风里带回来的。",
+          "{pet_name} 说：这是 {item}。"
+        ]
+      },
+      "poetic_ratio": 0.10
+    },
+    "sign_off": { "mode": "template", "variants": ["— {pet_name}"] }
+  },
+  "assets": { "icon": "images/icons/item.svg" },
+  "highlight": { "memory_refs": true, "anchor_style": "underline" },
+  "recall_required": ["pet_name", "item_name"],
+  "recall_min_count": 1
+}

@@ -1,0 +1,25 @@
+{
+  "type": "offer_received",
+  "slots": {
+    "title": { "mode": "fixed", "default": "{pet_name} 收下了" },
+    "body": {
+      "mode": "template",
+      "variants": {
+        "daily": [
+          "{pet_name} 收到了 {item}。",
+          "你把 {item} 放在桌上，{pet_name} 看见了。"
+        ],
+        "poetic": [
+          "{item}，{pet_name} 收下了。",
+          "桌上多了一份心意。"
+        ]
+      },
+      "poetic_ratio": 0.10
+    },
+    "sign_off": { "mode": "template", "variants": ["— {pet_name}"] }
+  },
+  "assets": { "icon": "images/icons/offer.svg" },
+  "highlight": { "memory_refs": true, "anchor_style": "underline" },
+  "recall_required": ["pet_name", "item_name"],
+  "recall_min_count": 1
+}

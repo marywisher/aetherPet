@@ -1,0 +1,25 @@
+{
+  "type": "watching_water",
+  "slots": {
+    "title": { "mode": "fixed", "default": "{pet_name} 在看水" },
+    "body": {
+      "mode": "template",
+      "variants": {
+        "daily": [
+          "{pet_name} 在 {place} 看了 {duration_minutes} 分钟的水。",
+          "今天去了 {place}，看了一会儿水。"
+        ],
+        "poetic": [
+          "{place} 的水，看了 {duration_minutes} 分钟就够。",
+          "水从 {place} 流过，{pet_name} 看着看着就忘了时间。"
+        ]
+      },
+      "poetic_ratio": 0.10
+    },
+    "sign_off": { "mode": "template", "variants": ["— {pet_name}"] }
+  },
+  "assets": { "icon": "images/icons/watching-water.svg" },
+  "highlight": { "memory_refs": true, "anchor_style": "underline" },
+  "recall_required": ["pet_name", "place"],
+  "recall_min_count": 0
+}

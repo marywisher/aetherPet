@@ -1,41 +1,48 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ---------- 依赖 ----------
+node_modules/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
+# ---------- 构建产物 ----------
+.next/
+out/
+build/
+dist/
 *.tsbuildinfo
-next-env.d.ts
+# playwright 报告
+test-results/
+playwright-report/
+
+# ---------- 环境变量 · 隐私（绝不提交） ----------
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+!.env.example
+
+# ---------- 运行时日志（按日生成，隐私可含用户IP等） ----------
+logs/
+*.log
+npm-debug.log*
+
+# ---------- 数据库/备份（含用户数据） ----------
+data/
+backups/
+*.db
+*.sql.gz
+*.dump
+
+# ---------- 本地素材包/覆盖物 ----------
+src/assets/packs/*/local/
+!src/assets/packs/**/manifest.json
+
+# ---------- 系统/编辑器 ----------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# ---------- 临时文件 ----------
+tmp/
+temp/
+*.tmp

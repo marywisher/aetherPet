@@ -1,0 +1,28 @@
+{
+  "type": "outing",
+  "slots": {
+    "title": { "mode": "fixed", "default": "{pet_name} 出门了" },
+    "body": {
+      "mode": "template",
+      "variants": {
+        "daily": [
+          "今天去了 {destination}，走了 {duration_hours} 小时。",
+          "{pet_name} 出去溜达了一圈，回来时鞋底沾了 {destination} 的花草气。",
+          "路过 {destination}，看了看风景就回来了。"
+        ],
+        "poetic": [
+          "{pet_name} 走了一趟 {destination}，风里有 {duration_hours} 小时的光。",
+          "去 {destination} 的时候，天正好。"
+        ]
+      },
+      "poetic_ratio": 0.10
+    },
+    "sign_off": { "mode": "template", "variants": ["— {pet_name}", "—— {pet_name}"] }
+  },
+  "assets": {
+    "icon": "images/icons/outing.svg"
+  },
+  "highlight": { "memory_refs": true, "anchor_style": "underline" },
+  "recall_required": ["pet_name", "place"],
+  "recall_min_count": 0
+}

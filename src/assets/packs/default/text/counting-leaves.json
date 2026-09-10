@@ -1,0 +1,25 @@
+{
+  "type": "counting_leaves",
+  "slots": {
+    "title": { "mode": "fixed", "default": "{pet_name} 在数叶子" },
+    "body": {
+      "mode": "template",
+      "variants": {
+        "daily": [
+          "{pet_name} 数了 {count} 片叶子。",
+          "数到 {count} 片，就没数了。"
+        ],
+        "poetic": [
+          "{count} 片叶子，够 {pet_name} 数到发呆。",
+          "风把 {count} 片叶子放在 {pet_name} 面前。"
+        ]
+      },
+      "poetic_ratio": 0.10
+    },
+    "sign_off": { "mode": "template", "variants": ["— {pet_name}"] }
+  },
+  "assets": { "icon": "images/icons/leaves.svg" },
+  "highlight": { "memory_refs": true, "anchor_style": "underline" },
+  "recall_required": ["pet_name"],
+  "recall_min_count": 0
+}
