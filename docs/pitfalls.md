@@ -30,6 +30,72 @@
 
 ---
 
+### [2026-09-09] 多中心预留被 repo 层硬编码悄悄破坏（P1-005）
+
+**阶段**：阶段 1 开发
+
+**问题描述**：
+审计日志 repo 层硬编码 `hub_id='local'`，违反「多中心数据主权」预留：未来导入到其它服务中心后，审计数据会全部被标为本地中心，跨中心溯源失效。
+
+**根因分析**：
+架构层定义了 `hub_id` 字段，但实现层 repo 没有把 hub id 作为入参，而是图省事写死常量。这是「预留字段只落在 DDL、没落到代码约定」的典型——schema 有、代码没跟。
+
+**修复方案**：
+`AuditLogInput` 新增 `hubId`/`schemaVersion` 字段，缺省从 env（`HUB_ID`）读取；SQL 全参数化（5→8 占位符）；补 8 个单测覆盖 env 兜底/显式优先。
+
+**预防措施**：
+任何「多中心预留字段」，开发时在 repo 层签名中必须作为显式入参或 env 读取，禁止硬编码常量；质检硬门新增「grep 硬编码 hub_id」检查项。
+
+**标签**：`技术`
+
+**状态**：`已闭环`
+
+---
+
+### [2026-09-09] Next.js 16 构建期 Edge Runtime 告警（fs/path 依赖）
+
+**阶段**：阶段 1 开发
+
+**问题描述**：
+`next build` 时 4 处 Route（healthz 等）报 `A Node.js module is loaded ('path'/'fs'/'crypto') which is not supported in the Edge Runtime` 警告。构建成功但属隐患，部署时可能更严格。
+
+**根因分析**：
+Next.js 16 Turbopack 构建时会自动推断 Route Runtime；API route 的 import 链依赖 Node-only 模块（fs/path/crypto）时给出静态分析警告，但产物仍以 Node Runtime 运行。
+
+**修复方案**：
+（阶段 6 部署前必修）在相关 route 顶部加 `export const runtime = "nodejs"` 显式声明；或将 `startup.ts` 移入 `src/server-only/` 由 Next 自动归类。
+
+**预防措施**：
+新增 API route 时若依赖 Node 内置模块，第一时间声明 `runtime = "nodejs"`；构建日志中 Edge Runtime 警告为零再提交。
+
+**标签**：`技术`
+
+**状态**：`待验证`（阶段 6 修复后闭环）
+
+---
+
+### [2026-09-09] 本机 Docker 未启动 → MySQL 集成实测无法执行
+
+**阶段**：阶段 1 开发
+
+**问题描述**：
+质检轮次中 Docker Desktop 未运行（`docker ps` 管道错误），MySQL 集成实测（db:up → dev server → /api/healthz）无法执行，只能以代码审查 + 单测 + DDL 静态比对替代。
+
+**根因分析**：
+开发链在无 Docker 环境的本机运行时，凡依赖容器的集成验证都会失效；质检员未在开始前确认环境可用性。
+
+**修复方案**：
+本次以静态核验降级通过；修复动作排期：Docker 可用时跑演示脚本，或纳入阶段 6 CI（拉临时 MySQL 容器跑 E2E）。
+
+**预防措施**：
+每个阶段开发链启动前，主 agent 先检查 Docker 可用性；若不可用，提前告知质检员「集成验证降级为静态」并在阶段计划中排期补测。
+
+**标签**：`环境`
+
+**状态**：`待验证`
+
+---
+
 ## 跨项目可复用清单
 
 <pending>
