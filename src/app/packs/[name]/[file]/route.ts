@@ -9,12 +9,18 @@
  *   - 原实现只有 /api/packs，没有 /packs/* 路由，CSS 一直 404
  *   - 此 route 通过 readPackFile 按 category 读取文件并返回对应 MIME
  *   - 路径遍历防护沿用 loader 内的双保险（fileName 含 .. 或绝对路径直接拒绝）
+ *
+ * Edge 一致性修复：
+ *   - 本 route 经 loader 间接使用 fs / path（Node API），显式声明 nodejs runtime，
+ *     与其它 7 个 route 保持一致，避免将来误改成 Edge 时报
+ *     "A Node.js module is loaded ('fs' ...) which is not supported in the Edge Runtime"。
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import path from "path";
 import { readPackFile } from "@/domain/packs/loader";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type RouteContext = { params: Promise<{ name: string; file: string }> };
