@@ -5,6 +5,7 @@
  * 说明：
  *   - 通过环境变量配置：LOG_DIR（默认 logs/）、LOG_LEVEL（默认 info）、LOG_CONSOLE（默认 1=同时输出控制台）
  *   - 级别：debug < info < warn < error；低于配置级别的不记录
+ *   - 时间戳：本地时区 ISO 格式带偏移（如 2026-09-11T15:39:09.065+08:00），文件与控制台一致
  *   - 日期切换：每次写入时检查日期，跨日自动切换文件句柄
  *   - 同步写 + try/catch：日志失败绝不影响业务逻辑
  *   - 用法：`import { log } from "@/lib/logger"` 或 `createLogger("模块名")` 得到命名空间实例
@@ -50,6 +51,20 @@ function ensureCurrentFile(d: Date = new Date()): string {
   return _filePath;
 }
 
+/** 本地时区 ISO 时间戳（含毫秒与时区偏移），如 2026-09-11T15:39:09.065+08:00 */
+function localIso(d: Date): string {
+  const pad = (n: number, len = 2) => String(n).padStart(len, "0");
+  const offMin = -d.getTimezoneOffset();
+  const sign = offMin >= 0 ? "+" : "-";
+  const oh = pad(Math.floor(Math.abs(offMin) / 60));
+  const om = pad(Math.abs(offMin) % 60);
+  return (
+    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` +
+    `T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}` +
+    `${sign}${oh}:${om}`
+  );
+}
+
 function formatDetail(detail: unknown): string {
   if (detail === undefined || detail === null) return "";
   if (typeof detail === "string") return ` ${detail}`;
@@ -64,11 +79,12 @@ function write(level: LogLevel, scope: string, message: string, detail?: unknown
   if (LEVEL_ORDER[level] < LEVEL_ORDER[LOG_LEVEL]) return;
 
   const now = new Date();
-  const lineText = `[${now.toISOString()}] [${level.toUpperCase()}] [${scope}] ${message}${formatDetail(detail)}\n`;
+  const ts = localIso(now);
+  const lineText = `[${ts}] [${level.toUpperCase()}] [${scope}] ${message}${formatDetail(detail)}\n`;
 
   if (LOG_CONSOLE) {
     const fn = level === "error" ? console.error : level === "warn" ? console.warn : console.log;
-    fn(`[${level.toUpperCase()}] [${scope}] ${message}`, detail ?? "");
+    fn(`[${ts}] [${level.toUpperCase()}] [${scope}] ${message}`, detail ?? "");
   }
 
   try {

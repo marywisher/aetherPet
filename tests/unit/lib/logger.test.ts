@@ -47,6 +47,10 @@ describe("logger · 按日文件写入", () => {
     expect(content).toContain("[INFO]");
     expect(content).toContain("[auth]");
     expect(content).toContain("验证码已发送");
+    // 每条记录带本地时区时间戳（YYYY-MM-DDTHH:mm:ss.SSS±HH:MM）
+    for (const line of content.split("\n").filter((l) => l.length > 0)) {
+      expect(line).toMatch(/^\[\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}[+-]\d{2}:\d{2}\] \[\w+\] \[\w+\]/);
+    }
     // detail JSON 序列化并入
     expect(content).toContain('"email":"a@b.c"');
   });
