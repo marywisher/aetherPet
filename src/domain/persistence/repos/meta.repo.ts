@@ -17,7 +17,7 @@ export async function setMeta(key: string, value: string): Promise<void> {
   const pool = getPool();
   await execute(
     pool,
-    `INSERT INTO meta (key, value, updated_at) VALUES (?, ?, ?)
+    `INSERT INTO meta (\`key\`, value, updated_at) VALUES (?, ?, ?)
      ON DUPLICATE KEY UPDATE value = VALUES(value), updated_at = VALUES(updated_at)`,
     [key, value, Date.now()]
   );
@@ -25,7 +25,7 @@ export async function setMeta(key: string, value: string): Promise<void> {
 
 export async function getMeta(key: string): Promise<string | null> {
   const pool = getPool();
-  const row = await queryOne<MetaRow>(pool, "SELECT value FROM meta WHERE key = ?", [key]);
+  const row = await queryOne<MetaRow>(pool, "SELECT value FROM meta WHERE \`key\` = ?", [key]);
   return row ? row.value : null;
 }
 
@@ -39,7 +39,7 @@ export async function setManyMeta(pairs: Record<string, string>): Promise<void> 
   const params = keys.flatMap((k, i) => [k, values[i], now]);
   await execute(
     pool,
-    `INSERT INTO meta (key, value, updated_at) VALUES ${placeholders}
+    `INSERT INTO meta (\`key\`, value, updated_at) VALUES ${placeholders}
      ON DUPLICATE KEY UPDATE value = VALUES(value), updated_at = VALUES(updated_at)`,
     params
   );
@@ -47,7 +47,7 @@ export async function setManyMeta(pairs: Record<string, string>): Promise<void> 
 
 export async function getAllMeta(): Promise<Record<string, string>> {
   const pool = getPool();
-  const rows = await query<MetaRow>(pool, "SELECT key, value FROM meta");
+  const rows = await query<MetaRow>(pool, "SELECT \`key\`, value FROM meta");
   const result: Record<string, string> = {};
   for (const row of rows) result[row.key] = row.value;
   return result;

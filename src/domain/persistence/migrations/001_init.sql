@@ -19,10 +19,10 @@
 -- ================================================================
 
 CREATE TABLE meta (
-  key           VARCHAR(64)      NOT NULL,
+  `key`         VARCHAR(64)      NOT NULL,
   value         TEXT             NOT NULL,
   updated_at    BIGINT UNSIGNED  NOT NULL,
-  PRIMARY KEY (key)
+  PRIMARY KEY (`key`)
 ) ENGINE=InnoDB;
 
 CREATE TABLE migrations (

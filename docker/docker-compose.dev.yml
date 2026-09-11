@@ -15,23 +15,23 @@ services:
     container_name: aetherpet-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ***
-      MYSQL_DATABASE: aetherpet
-      MYSQL_USER: aetherpet
-      MYSQL_PASSWORD: ***
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-aetherpet}
+      MYSQL_DATABASE: ${DB_NAME:-aetherpet}
+      MYSQL_USER: ${DB_USER:-aetherpet}
+      MYSQL_PASSWORD: ${DB_PASS:-aetherpet}
       TZ: Asia/Shanghai
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - aetherpet_mysql_data:/var/lib/mysql
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --sql-mode=STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION
-      - --default-time-zone='+08:00'
+      - --default-time-zone=+08:00
       - --innodb-buffer-pool-size=800M
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-aetherpet}"]
       interval: 5s
       timeout: 5s
       retries: 10
