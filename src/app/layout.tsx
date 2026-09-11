@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "aetherPet · 佛系陪伴",
-  description: "aetherPet 官方默认素材包 · 手绘暖调 · 隐居模式",
+  title: "AetherPet · 佛系陪伴",
+  description: "AetherPet 官方默认素材包 · 手绘暖调 · 隐居模式",
 };
 
 export default function RootLayout({

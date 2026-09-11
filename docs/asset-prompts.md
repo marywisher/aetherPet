@@ -1,4 +1,4 @@
-# aetherPet 素材产出示意词（即梦 / JIMENG 用）
+# AetherPet 素材产出示意词（即梦 / JIMENG 用）
 
 > 目标：用统一风格产出 MVP 全套 UI 素材，放入素材包目录 `assets/theme-default/`。
 > 即梦产出后可按本文档命名规范存放，前端直接引用。

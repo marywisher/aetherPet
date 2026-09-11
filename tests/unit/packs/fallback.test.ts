@@ -62,7 +62,7 @@ describe("fallback", () => {
       const result = applyFallback(broken, "default");
       expect(result.effectivePack.name).toBe("default");
       expect(result.effectivePack.manifest).toBe(EMPTY_PACK_MANIFEST);
-      expect(result.effectivePack.themeCssContent).toBe("/* aetherpet fallback */");
+      expect(result.effectivePack.themeCssContent).toBe("/* AetherPet fallback */");
       expect(result.fallbackReason).toBe("manifest_missing");
     });
   });

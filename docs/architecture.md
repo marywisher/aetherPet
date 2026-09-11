@@ -1,4 +1,4 @@
-# aetherPet MVP · 架构设计文档
+# AetherPet MVP · 架构设计文档
 
 > 状态：定稿，交付软件工程师执行
 > 关联文档：`docs/requirements.md`（MVP v1.1 · 权威需求）、`docs/product-review.md`（评审报告）、`docs/database-schema.md`、`docs/dev-stage-plan.md`、`CONTEXT.md`
@@ -15,7 +15,7 @@
 
 本文件回答三个问题：
 
-1. **aetherPet 的技术骨架长什么样**——四层结构、模块边界、契约接口。
+1. **AetherPet 的技术骨架长什么样**——四层结构、模块边界、契约接口。
 2. **为什么这样选**——每个技术选择从"用在哪、给谁用、要做什么"倒推，不写"生态成熟"这种空话。
 3. **未来怎么扩**——多中心迁移、货币市场、插件生态，从 MVP 就预留但不实现。
 
@@ -102,14 +102,14 @@
 
 **为什么选它，不是 "React 生态好" 这种空话：**
 
-- aetherPet 是**开源项目**，核心承诺是"共创开发者可插拔"。Next.js 的 TypeScript 类型系统 + App Router 让 API route、domain 类型、前端页面**共用一套 TS 定义**。事件契约、素材包 manifest 的 TS interface 一次定义，前端消费、服务端消费、JSON schema 生成三方对齐——这就是"表现与逻辑解耦"能落地的技术前提。
+- AetherPet 是**开源项目**，核心承诺是"共创开发者可插拔"。Next.js 的 TypeScript 类型系统 + App Router 让 API route、domain 类型、前端页面**共用一套 TS 定义**。事件契约、素材包 manifest 的 TS interface 一次定义，前端消费、服务端消费、JSON schema 生成三方对齐——这就是"表现与逻辑解耦"能落地的技术前提。
 - Next.js 的 **App Router 让前端页面和 API 同仓同进程**，自托管用户 `git clone && npm run build && npm run start` 三步上线，不需要另开 Node 服务、不需要 Docker compose 拆两个容器。这对"官方托管 + 自托管"的双形态是关键——自托管门槛越低越好。
 - **SSR 首屏加载 <3s** 是硬指标。App Router 默认 SSR + 静态资源边缘缓存，天然满足 Web Vitals；纯 CSR 前端（如 CRA/Vite SPA）首屏要等 JS bundle，很难保证 <3s。
 - 素材包图片、CSS 变量、文案 JSON 都可以通过 `/_assets/packs/:name/*` 的动态路由由 Next.js 静态托管，运行期切换素材包无需重启。
 
 **为什么不是 Vue 3 + Nuxt：**
 
-- 功能等价，但 Nuxt 3 的 TS 类型推断能力（尤其跨目录复用）比 Next.js App Router 略弱。aetherPet 的核心是"契约共享"，契约的严谨度优先于模板语法简洁度。
+- 功能等价，但 Nuxt 3 的 TS 类型推断能力（尤其跨目录复用）比 Next.js App Router 略弱。AetherPet 的核心是"契约共享"，契约的严谨度优先于模板语法简洁度。
 - 开源生态对比：TypeScript 官方工具链、ESLint/TypeScript 深度集成、`npx @tsc-strict/no-control-regex` 等类型层守门，Next.js 生态更完备。
 - 招聘/贡献者池：Node 前端招聘中 Next.js 熟悉者显著多于 Nuxt（尤其中文开发者社区），对开源项目长期贡献度更友好。
 
@@ -162,7 +162,7 @@
 ### 2.4 状态管理：Zustand
 
 - 前端只有 4 个页面，状态集中在 `pet`、`token`、`activePack`、`pendingGift`。Zustand 无 boilerplate、无 Provider 嵌套，适合"低频交互"应用。
-- Redux Toolkit 过重；React Query 只适合纯服务端状态，aetherPet 有大量前端本地状态（当前素材包、渐进披露展开状态）需要独立管理。
+- Redux Toolkit 过重；React Query 只适合纯服务端状态，AetherPet 有大量前端本地状态（当前素材包、渐进披露展开状态）需要独立管理。
 
 ### 2.5 UI 库：TailwindCSS + 手写组件
 
@@ -689,7 +689,7 @@ asset-packs/<pack-name>/
   "version": "1.0.0",
   "pack_schema_version": "1.0.0",
   "min_engine_version": "1.0.0",
-  "author": "aetherPet core team",
+  "author": "AetherPet core team",
   "license": "MIT",
   "theme": {
     "css": "theme.css",
@@ -871,7 +871,7 @@ SSR 时注入 <link rel="stylesheet" href="/_assets/packs/default/theme.css">
 
 ### 10.2 官方托管中心（宝塔生产环境）
 
-- 由 aetherPet 项目方运维一台或多台服务器，用户"打开即用"。
+- 由 AetherPet 项目方运维一台或多台服务器，用户"打开即用"。
 - **部署方式**：Next.js `output: standalone` → Node 进程由 **PM2** 常驻运行 → **Apache 反向代理**（宝塔面板配置：域名 + 证书 + proxy_pass 到 `127.0.0.1:3000`）。
 - **数据库**：宝塔 MySQL 实例（MySQL 8.x，InnoDB，utf8mb4）。数据库连接走 `mysql2` 连接池。
 - **备份**：宝塔面板自带 MySQL 备份任务（每日 mysqldump，保留 7 天）+ `scripts/backup.ts` 额外导出 JSON（跨中心迁移用）。**不再依赖 SQLite 文件卷**。

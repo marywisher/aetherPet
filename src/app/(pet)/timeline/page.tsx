@@ -92,7 +92,7 @@ function TimelineInner() {
         className="flex h-screen items-center justify-center"
         style={{ color: "var(--muted)" }}
       >
-        正在唤醒 {packDisplayName ?? packName ?? "aetherPet"}…
+        正在唤醒 {packDisplayName ?? packName ?? "AetherPet"}…
       </div>
     );
   }
@@ -131,7 +131,7 @@ function TimelineInner() {
             {petName} 的时间线
           </h1>
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            {packDisplayName ?? packName ?? "aetherPet"} · 单一时间轴 · 无社交压力
+            {packDisplayName ?? packName ?? "AetherPet"} · 单一时间轴 · 无社交压力
           </p>
         </div>
         <Link href="/" className="text-xs underline" style={{ color: "var(--muted)" }}>

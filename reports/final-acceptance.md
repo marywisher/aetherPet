@@ -1,4 +1,4 @@
-# aetherPet · 最终验收报告（11 项验收全量）
+# AetherPet · 最终验收报告（11 项验收全量）
 
 - 日期：2026-09-10（阶段 6 收官）
 - 依据：`docs/requirements.md` §6 验收标准、`docs/dev-stage-plan.md` §7 追踪矩阵

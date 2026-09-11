@@ -1,4 +1,4 @@
-# aetherPet MVP · 架构总结（给编排者读）
+# AetherPet MVP · 架构总结（给编排者读）
 
 > 本文件是**四份文档**的总览与快速导航：
 > - `docs/architecture.md` — 架构设计（12 节，约 15k 字）

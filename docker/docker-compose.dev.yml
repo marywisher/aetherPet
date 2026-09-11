@@ -1,4 +1,4 @@
-# aetherPet 本地开发 MySQL 8 容器
+# AetherPet 本地开发 MySQL 8 容器
 # 与生产（宝塔 MySQL 8）同构，避免方言差异
 # 启动：docker compose -f docker/docker-compose.dev.yml up -d mysql
 # 停止：docker compose -f docker/docker-compose.dev.yml down

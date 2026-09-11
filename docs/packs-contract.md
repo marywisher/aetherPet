@@ -1,8 +1,8 @@
-# aetherPet 素材包契约（Pack Contract）
+# AetherPet 素材包契约（Pack Contract）
 
 > 版本：**v1.0.1**（阶段 2 Round 2 修复）  
 > 冻结时间：阶段 2（2024-06）  
-> 适用范围：aetherPet 素材包（`src/assets/packs/<name>/`）  
+> 适用范围：AetherPet 素材包（`src/assets/packs/<name>/`）  
 > 演进规则见 §8
 > 本版本变更：§2 manifest.json 契约与实际 `manifest-schema.ts` 对齐（P1-003）；
 > §5 brought_item FSM 动作改为 `out_walking → at_home`（P1-004）；
@@ -47,7 +47,7 @@ MVP 阶段不引入 `fonts/` / `icons/` / `particles/` 等目录（阶段 5 才�
   "version": "1.0.0",                       // 包本身版本（semver）
   "pack_schema_version": "1.0.0",           // 契约版本（本文件），仅支持 1.x.x
   "min_engine_version": "1.0.0",            // 最低引擎版本
-  "author": "aetherPet core team",          // 作者（非空）
+  "author": "AetherPet core team",          // 作者（非空）
   "license": "MIT",                         // 授权（非空）
 
   // ===== 主题与视觉 =====

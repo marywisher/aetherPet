@@ -1,4 +1,4 @@
-# aetherPet MVP · 数据库设计文档
+# AetherPet MVP · 数据库设计文档
 
 > 状态：定稿，与 `docs/architecture.md` §3 项目结构一致
 > 关联文档：`docs/architecture.md`（架构）、`docs/dev-stage-plan.md`（阶段计划）
@@ -125,7 +125,7 @@ CREATE TABLE meta (
 -- 预置键（示例，由 scripts/seed-default-pack.ts 或 migration 写入）：
 --   schema_version    = '1.0.0'      全局 schema 版本（每次 migration bump）
 --   hub_id            = 'local'      当前中心标识（自托管默认 local；官方可配置）
---   hub_display_name  = 'aetherPet Local'   当前中心展示名（邮件 Header/正文用）
+--   hub_display_name  = 'AetherPet Local'   当前中心展示名（邮件 Header/正文用）
 --   hub_admin_email   = 'admin@...'  当前中心管理员邮箱（邮件底部联系）
 --   hub_privacy_url   = 'https://.../privacy'  当前中心隐私承诺页
 --   smtp_host         = 'smtp.example.com'   SMTP 主机（v1.1 hub-autonomous email）

@@ -62,7 +62,7 @@ export async function getHubIdentityFromMeta(): Promise<HubIdentity | null> {
   if (!hubId) return null;
   return {
     hubId,
-    hubDisplayName: displayName || "aetherPet",
+    hubDisplayName: displayName || "AetherPet",
     adminEmail: adminEmail || "",
     privacyUrl: privacyUrl || "",
     domain: domain || "",

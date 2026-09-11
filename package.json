@@ -2,9 +2,10 @@
   "name": "aetherpet",
   "version": "0.1.0",
   "private": true,
-  "description": "aetherPet · 佛系陪伴应用（MVP）",
+  "description": "AetherPet · 佛系陪伴应用（MVP）",
   "scripts": {
     "dev": "next dev",
+    "dev:quiet": "next dev 2>&1 | node scripts/dev-filter.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

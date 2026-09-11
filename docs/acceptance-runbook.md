@@ -1,4 +1,4 @@
-# aetherPet · 11 项验收实操手册（真库 E2E）
+# AetherPet · 11 项验收实操手册（真库 E2E）
 
 > 适用版本：阶段 6（v0.1.0）｜ 环境：本地 Docker MySQL 8.4 + `npm run dev`
 > 依据：`docs/requirements.md` §6、`docs/dev-stage-plan.md` §7、`reports/final-acceptance.md`
@@ -8,25 +8,43 @@
 
 ## 0. 前置自检（一次性，约 1 分钟）
 
-```bash
-# 1) 数据库容器健康
+> ⚠️ **PowerShell 用户先读**：本文档命令默认 bash 语法。若你在 Windows PowerShell 里操作，
+> 下面 3 个差异必须注意，否则会报错或拿不到结果：
+>
+> 1. **环境变量赋值**：bash 用 `INTEGRATION_DB=1 npm run test:integration`，
+>    PowerShell 要写成：`$env:INTEGRATION_DB="1"; npm run test:integration`
+> 2. **curl**：PowerShell 5.1 里 `curl` 是 `Invoke-WebRequest` 的别名（输出长且不友好），
+>    统一用 `curl.exe`（真实 curl；Win10/11 自带）；并避免用 `|` 管道再配 `python -m json.tool` 时
+>    出现编码乱码 → 可直接 `curl.exe -s ...` 看原始 JSON。
+> 3. **查看日志**：bash 的 `tail -30 ... | grep xxx` 在 PowerShell 用：
+>    `Get-Content logs/dev-server.log -Tail 30 | Select-String "code"`
+>    （`Select-String` 相当于 `grep`；`Get-Content -Tail N` 相当于 `tail -N`）
+
+```powershell
+# 1) 数据库容器健康（PowerShell 可直接用）
 docker ps --filter name=aetherpet        # 应显示 Up (healthy)，端口 127.0.0.1:3306
 
 # 2) 应用存活且 migration 成功
-curl -s http://localhost:3000/api/healthz | python -m json.tool
-#   预期：db.ok=true，startup.failed=false
+curl.exe -s http://localhost:3000/api/healthz
+#   预期：{"ok":true,...} 中 db.ok=true，startup.failed=false
+
+# （可选）开发日志去噪：Next.js 16 dev 会刷一批 Edge Runtime 分析警告（非报错，不影响功能）。
+#   不想看就用 dev:quiet 过滤后再写日志；或临时清空已膨胀的日志：
+#   npm run dev:quiet 2>&1 >> logs/dev-server.log
+#   Clear-Content logs/dev-server.log
 
 # 3) 自动化证据全跑一遍（单测 + 真库集成 + 性能冒烟）
 npm test                                   # 单测：519 passed / 8 skipped
-INTEGRATION_DB=1 npm run test:integration  # 集成：8 passed（真实 MySQL 8.4）
-npm run smoke -- --server http://localhost:3000   # 性能冒烟：3/3 通过
+$env:INTEGRATION_DB="1"; npm run test:integration   # 集成：8 passed（真实 MySQL 8.4）
+npm run smoke -- --server http://localhost:3000     # 性能冒烟：3/3 通过
 ```
 
 > 应用开发服务器：`npm run dev`（已在 http://localhost:3000 运行）
 > 登录验证码：本地 `SMTP_DRY_RUN=true` **不真发邮件**，验证码打印在 `logs/dev-server.log`，每次注册后去查：
-> ```bash
-> tail -30 logs/dev-server.log | grep -A2 -i "code\|验证码"
+> ```powershell
+> Get-Content logs/dev-server.log -Tail 50 | Select-String -Pattern "code|验证码|verification"
 > ```
+> 第 8 项（素材包切换）需开发者模式：`.env` 已设 `ENABLE_DEV_ENDPOINTS=true`（改后需重启 `npm run dev`）。
 
 ---
 
@@ -37,6 +55,7 @@ npm run smoke -- --server http://localhost:3000   # 性能冒烟：3/3 通过
 2. 从 `logs/dev-server.log` 找到 6 位验证码 → 输入 → 注册成功进入「创建宠物」页
 3. 输入宠物名（如「棉花」）→ 创建成功 → 回到首页看到宠物
 4. 退出登录 → 用同一邮箱 + 新验证码重新登录
+   > 退出入口：`/settings` 页底部「账号」区块的「退出登录」按钮（点一下即自动清 cookie 并跳回 `/login`；API 失败时前端也会兜底清 cookie）
 5. 同邮箱 5 分钟内快速连点 3 次「发送验证码」→ 第 4 次应被节流
 
 **预期**

@@ -1,4 +1,4 @@
-# aetherPet · 生产镜像（Docker Compose 自托管路径 b）
+# AetherPet · 生产镜像（Docker Compose 自托管路径 b）
 # 多阶段构建：
 #   1) deps：安装依赖（锁定 lockfile）
 #   2) build：next build（产出 .next/standalone）

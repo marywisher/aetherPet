@@ -1,4 +1,4 @@
-# aetherPet MVP · 开发阶段计划
+# AetherPet MVP · 开发阶段计划
 
 > 状态：定稿，与 `docs/architecture.md`、`docs/database-schema.md` 同步
 > 划分原则：**每阶段是"可独立演示验证"的最小闭环**；本阶段本身是下一阶段的细化（MVP 增量思想）

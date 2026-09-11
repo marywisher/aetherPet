@@ -1,8 +1,8 @@
-# aetherPet
+# AetherPet
 
 **An open-source, pluggable, low-frequency AI companion pet.** 🍃🐾
 
-aetherPet is a spiritual successor to *Travel Frog (旅かえる)*: your pet lives quietly in its own little world — it wanders, watches the water, counts leaves, and every once in a while writes *you* a letter. No social networks, no leaderboards, no FOMO. Just a small, warm presence that remembers you.
+AetherPet is a spiritual successor to *Travel Frog (旅かえる)*: your pet lives quietly in its own little world — it wanders, watches the water, counts leaves, and every once in a while writes *you* a letter. No social networks, no leaderboards, no FOMO. Just a small, warm presence that remembers you.
 
 > 中文版说明见 [README.zh-CN.md](./README.zh-CN.md)
 
@@ -12,7 +12,7 @@ aetherPet is a spiritual successor to *Travel Frog (旅かえる)*: your pet liv
 
 The beloved game *Travel Frog* will officially cease operations on December 8, 2026. However, its gameplay and spirit should not be abandoned just like that. Therefore, we plan to create our own version.
 
-aetherPet is designed as **an open ecosystem**, not a closed app:
+AetherPet is designed as **an open ecosystem**, not a closed app:
 
 - **核心基座 (core kernel) + pluggable packs** — the event engine and the "presentation layer" (visual + copy) are fully decoupled. Anyone can reskin the pet by providing a *theme/voice pack* (JSON + CSS + images) — no code required.
 - **Hermit mode by default** — each pet lives independently, never interacting with other pets. No social pressure, no interaction quotas.

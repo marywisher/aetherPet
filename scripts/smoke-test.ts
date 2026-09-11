@@ -21,6 +21,17 @@ const serverUrl = args.includes("--server")
   ? args[args.indexOf("--server") + 1] ?? "http://localhost:3000"
   : "http://localhost:3000";
 
+// 加载项目根 .env（获取真实 DB 凭证）。
+// 直接 node/tsx 跑时没有 Next 的 env 加载器，不加载会退到 env.ts 默认值（DB_PASS=aetherpet），
+// 而本地 Docker MySQL 密码已写入 .env，不加载会 Access denied。
+// dotenv 语义不覆盖已存在的 process.env 值，CLI 传参优先级仍高于 .env。
+try {
+  const { loadEnvConfig } = require("@next/env");
+  loadEnvConfig(process.cwd(), false);
+} catch (err) {
+  console.warn(`  ⚠️  .env 加载失败，继续用现有 process.env：${err instanceof Error ? err.message : err}`);
+}
+
 const results: Array<{ name: string; ok: boolean; ms: number; note?: string }> = [];
 function report(name: string, ok: boolean, ms: number, note?: string) {
   results.push({ name, ok, ms, note });
@@ -117,8 +128,8 @@ async function main(): Promise<number> {
     const body = await res.json().catch(() => null);
     if (!res.ok || body?.ok !== true) {
       // 端口被其他服务占用 / 返回非本应用 JSON → 跳过而非判失败（本地冒烟不背锅）
-      console.log("  ⚠️ 该端口不是 aetherPet 实例（或返回非健康 JSON），跳过健康检查（CI 中由 E2E 覆盖）");
-      results.push({ name: "GET /api/healthz", ok: true, ms, note: "skipped: not aetherPet instance" });
+      console.log("  ⚠️ 该端口不是 AetherPet 实例（或返回非健康 JSON），跳过健康检查（CI 中由 E2E 覆盖）");
+      results.push({ name: "GET /api/healthz", ok: true, ms, note: "skipped: not AetherPet instance" });
     } else {
       report("GET /api/healthz", ms < 3000, ms, "上限 3000ms");
     }

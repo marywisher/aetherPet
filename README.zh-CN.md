@@ -1,8 +1,8 @@
-# aetherPet
+# AetherPet
 
 **一款开源、可插拔、低频互动的 AI 陪伴宠物。** 🍃🐾
 
-aetherPet 是《旅行青蛙》的精神续作：你的宠物在自己的小世界里安静地过日子——它出门散步、看水、数叶子，偶尔给你写一封信。没有社交、没有排行榜、没有「你该回来了」的催促。只有一个小小的、温暖的、记得你的存在。
+AetherPet 是《旅行青蛙》的精神续作：你的宠物在自己的小世界里安静地过日子——它出门散步、看水、数叶子，偶尔给你写一封信。没有社交、没有排行榜、没有「你该回来了」的催促。只有一个小小的、温暖的、记得你的存在。
 
 > English version: [README.md](./README.md)
 
@@ -12,7 +12,7 @@ aetherPet 是《旅行青蛙》的精神续作：你的宠物在自己的小世�
 
 我们很喜欢的《旅行青蛙》将于 2026 年 12 月 8 日正式停止运营。但它的玩法它的精神不应该就此停止，于是我们打算自己做一只。
 
-aetherPet 被设计为**一个开源生态**，而不是一个封闭应用：
+AetherPet 被设计为**一个开源生态**，而不是一个封闭应用：
 
 - **核心基座 + 可插拔素材包** — 事件引擎与表现层（视觉 + 文案）完全解耦。任何人只需提供一套 *theme/voice pack*（JSON + CSS + 图片）就能给宠物换风格，**无需写代码**。
 - **默认隐居模式** — 每只 pet 独立生活，不与其他 pet 交互。没有社交压力，没有互动指标。
@@ -68,7 +68,7 @@ npm run build     # 生产构建
 
 ## 部署（生产）
 
-aetherPet 产出 Next.js `standalone` 单进程服务，自托管有两条路径（详见 [`docs/SELF_HOST.md`](docs/SELF_HOST.md)）：
+AetherPet 产出 Next.js `standalone` 单进程服务，自托管有两条路径（详见 [`docs/SELF_HOST.md`](docs/SELF_HOST.md)）：
 
 - **路径 a（宝塔面板）**：Apache/Nginx 反代 → `127.0.0.1:3000`，PM2 守护（`pm2 start pm2-ecosystem.config.js`），MySQL 用宝塔实例
 - **路径 b（Docker Compose）**：`docker compose -f docker/docker-compose.yml up -d --build`（app + mysql 两容器）

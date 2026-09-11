@@ -166,7 +166,7 @@ function GiftsInner() {
             物品栏 · 送给 {petName}
           </h1>
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            {packDisplayName ?? packName ?? "aetherPet"} · 每日馈赠 · 用户主动摆放
+            {packDisplayName ?? packName ?? "AetherPet"} · 每日馈赠 · 用户主动摆放
           </p>
         </div>
         <div className="flex gap-2">

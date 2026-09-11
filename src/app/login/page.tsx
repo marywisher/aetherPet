@@ -99,7 +99,7 @@ export default function LoginPage() {
       <div className="paper p-8 w-full max-w-md space-y-6">
         <header className="text-center space-y-2">
           <h1 className="text-2xl font-semibold" style={{ fontFamily: "KaiTi, serif" }}>
-            aetherPet
+            AetherPet
           </h1>
           <p className="text-sm" style={{ color: "var(--muted)" }}>
             佛系陪伴 · 隐居模式 · 数据主权

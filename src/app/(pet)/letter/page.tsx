@@ -120,7 +120,7 @@ function LettersInner() {
             回信
           </h1>
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            {packDisplayName ?? packName ?? "aetherPet"} · {petName} 写给你的信
+            {packDisplayName ?? packName ?? "AetherPet"} · {petName} 写给你的信
           </p>
         </div>
         <div className="flex gap-2">

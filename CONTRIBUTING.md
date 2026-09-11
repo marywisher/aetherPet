@@ -1,8 +1,8 @@
-# Contributing to aetherPet
+# Contributing to AetherPet
 
-欢迎共建！aetherPet 是社区项目——无论是代码、文案、素材包还是文档，都欢迎你的参与。
+欢迎共建！AetherPet 是社区项目——无论是代码、文案、素材包还是文档，都欢迎你的参与。
 
-Welcome! aetherPet is built by its community — code, copy, asset packs, and docs all welcome.
+Welcome! AetherPet is built by its community — code, copy, asset packs, and docs all welcome.
 
 ---
 

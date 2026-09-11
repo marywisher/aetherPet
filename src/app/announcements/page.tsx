@@ -167,7 +167,7 @@ function AnnouncementsInner() {
             公告
           </h1>
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            {packDisplayName ?? "aetherPet"} · 低频触达 · 倒序列表
+            {packDisplayName ?? "AetherPet"} · 低频触达 · 倒序列表
           </p>
         </div>
         <div className="flex items-center gap-3 text-xs" style={{ color: "var(--muted)" }}>

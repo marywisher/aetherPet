@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "pack_schema_version": "1.0.0",
   "min_engine_version": "1.0.0",
-  "author": "aetherPet core team",
+  "author": "AetherPet core team",
   "license": "MIT",
   "theme": {
     "css": "theme.css",

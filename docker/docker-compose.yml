@@ -1,4 +1,4 @@
-# aetherPet · 自托管路径 b：Docker Compose（app + mysql 两容器）
+# AetherPet · 自托管路径 b：Docker Compose（app + mysql 两容器）
 # 用法：
 #   cd 项目根
 #   cp .env.example .env   # 按需修改（DB_* 改成下面 compose 的默认值即可）

@@ -1,4 +1,4 @@
-# aetherPet Release：打 tag 时构建 Docker 镜像并推送（自托管路径 b 用）
+# AetherPet Release：打 tag 时构建 Docker 镜像并推送（自托管路径 b 用）
 # 用法：git tag v0.1.0 && git push origin v0.1.0
 # 产物：ghcr.io/<owner>/aetherpet:latest + :<tag>
 

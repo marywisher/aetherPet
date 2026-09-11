@@ -48,7 +48,7 @@ export const envSchema = z.object({
 
   // ============== 中心身份（hub-autonomous email） ==============
   HUB_ID: z.string().min(1).default("local"),
-  HUB_DISPLAY_NAME: z.string().min(1).default("aetherPet Local"),
+  HUB_DISPLAY_NAME: z.string().min(1).default("AetherPet Local"),
   HUB_ADMIN_EMAIL: z.string().default("admin@example.com"),
   HUB_PRIVACY_URL: z.string().default("https://example.com/privacy"),
   HUB_DOMAIN: z.string().default(""),

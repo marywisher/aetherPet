@@ -1,4 +1,4 @@
-# aetherPet CI：类型检查 + 单测 + API 集成测试（临时 MySQL）+ 性能冒烟 + 构建
+# AetherPet CI：类型检查 + 单测 + API 集成测试（临时 MySQL）+ 性能冒烟 + 构建
 # 说明：阶段 6 补齐「API 层零集成测试」缺口——本工作流用 GitHub Actions 的
 #       MySQL service 拉一个临时 MySQL 8 容器，跑 tests/integration 全量用例。
 

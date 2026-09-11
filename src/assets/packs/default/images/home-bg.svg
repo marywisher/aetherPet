@@ -10,5 +10,5 @@
   <circle cx="640" cy="100" r="40" fill="#ffd89b" opacity="0.6"/>
   <path d="M0,300 Q200,240 400,280 T800,270 L800,400 L0,400 Z" fill="#85c485" opacity="0.4"/>
   <path d="M0,340 Q200,300 400,330 T800,320 L800,400 L0,400 Z" fill="#6ba06b" opacity="0.5"/>
-  <text x="40" y="50" font-family="KaiTi, serif" font-size="24" fill="#3d2f23" opacity="0.7">aetherPet · 手绘暖调</text>
+  <text x="40" y="50" font-family="KaiTi, serif" font-size="24" fill="#3d2f23" opacity="0.7">AetherPet · 手绘暖调</text>
 </svg>

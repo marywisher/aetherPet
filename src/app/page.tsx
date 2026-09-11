@@ -139,7 +139,7 @@ function HomeInner() {
         className="flex h-screen items-center justify-center"
         style={{ color: "var(--muted)" }}
       >
-        正在唤醒 {packDisplayName ?? packName ?? "aetherPet"}…
+        正在唤醒 {packDisplayName ?? packName ?? "AetherPet"}…
       </div>
     );
   }
@@ -152,7 +152,7 @@ function HomeInner() {
             {petName}
           </h1>
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            {packDisplayName ?? packName ?? "aetherPet"} ·{" "}
+            {packDisplayName ?? packName ?? "AetherPet"} ·{" "}
             {petState === "at_home"
               ? "在家"
               : petState === "out_walking"

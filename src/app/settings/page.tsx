@@ -23,6 +23,8 @@ export default function SettingsPage() {
   const [packName, setPackName] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // 退出登录状态（P1-001 修复：提供 UI 入口，对齐 runbook §1 第 4 步）
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -124,6 +126,38 @@ export default function SettingsPage() {
               >
                 打开开发者页
               </Link>
+            </div>
+          </section>
+
+          <section className="rounded-2xl p-4 border" style={{ borderColor: "var(--muted)" }}>
+            <h2 className="text-sm font-semibold" style={{ color: "var(--pack-ink)" }}>账号</h2>
+            <p className="text-xs mt-1" style={{ color: "var(--muted)" }}>
+              退出后会撤销当前会话，回到登录页。
+            </p>
+            <div className="mt-3">
+              <button
+                type="button"
+                disabled={loggingOut}
+                onClick={async () => {
+                  setLoggingOut(true);
+                  try {
+                    await fetch("/api/auth/logout", { method: "POST" });
+                  } catch {
+                    // 即使 API 失败也强制清 cookie 并跳转
+                    document.cookie = "aetherpet_token=; Max-Age=0; Path=/";
+                  } finally {
+                    router.replace("/login");
+                  }
+                }}
+                className="px-3 py-1.5 rounded-full text-sm border"
+                style={{
+                  borderColor: "var(--danger, #b3261e)",
+                  color: "var(--danger, #b3261e)",
+                  opacity: loggingOut ? 0.6 : 1,
+                }}
+              >
+                {loggingOut ? "退出中…" : "退出登录"}
+              </button>
             </div>
           </section>
         </>

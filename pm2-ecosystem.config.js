@@ -1,5 +1,5 @@
 /**
- * aetherPet · PM2 进程守护配置（宝塔/自托管路径 a）
+ * AetherPet · PM2 进程守护配置（宝塔/自托管路径 a）
  *
  * 用法：
  *   1) npm run build            # 产出 .next/standalone

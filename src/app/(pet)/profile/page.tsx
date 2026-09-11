@@ -154,7 +154,7 @@ function ProfileInner() {
             {pet.name} · 档案
           </h1>
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            {packDisplayName ?? packName ?? "aetherPet"} · 创建于 {formatDate(pet.createdAt)}
+            {packDisplayName ?? packName ?? "AetherPet"} · 创建于 {formatDate(pet.createdAt)}
           </p>
         </div>
         <div className="flex gap-2">

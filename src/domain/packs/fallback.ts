@@ -17,7 +17,7 @@ export const EMPTY_PACK_MANIFEST: PackManifest = {
   version: "1.0.0",
   pack_schema_version: "1.0.0",
   min_engine_version: "1.0.0",
-  author: "aetherPet core",
+  author: "AetherPet core",
   license: "MIT",
   theme: {
     css: "",
@@ -87,7 +87,7 @@ export function applyFallback(
     manifest: EMPTY_PACK_MANIFEST,
     path: "",
     webPath: "",
-    themeCssContent: "/* aetherpet fallback */",
+    themeCssContent: "/* AetherPet fallback */",
     images: {},
     texts: {},
     audio: {},

@@ -1,7 +1,7 @@
-# aetherPet 自托管部署指南（SELF-HOST）
+# AetherPet 自托管部署指南（SELF-HOST）
 
 > 适用版本：阶段 6（v0.1.0）｜ 部署形态：**路径 a（宝塔 + PM2 + MySQL）** 或 **路径 b（Docker Compose）**，二选一。
-> 前置概念：aetherPet 是「去中心化理念」应用——每个自托管实例都是一个独立「服务中心」（hub），
+> 前置概念：AetherPet 是「去中心化理念」应用——每个自托管实例都是一个独立「服务中心」（hub），
 > 有自己的身份（`HUB_ID`）、邮箱（SMTP）与公告渠道。数据归用户，JSON 导出/导入即可换中心。
 
 ---
@@ -55,7 +55,7 @@ DB_NAME=aetherpet
 
 # 中心身份（对外展示 + 公告溯源）
 HUB_ID=myhub               # 唯一标识，建议小写字母+数字
-HUB_DISPLAY_NAME=我的 aetherPet 中心
+HUB_DISPLAY_NAME=我的 AetherPet 中心
 HUB_ADMIN_EMAIL=admin@your-domain.com
 HUB_PRIVACY_URL=https://your-domain.com/privacy
 HUB_DOMAIN=your-domain.com
