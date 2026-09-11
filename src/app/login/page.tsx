@@ -19,6 +19,8 @@ export default function LoginPage() {
   const [info, setInfo] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
   const [step, setStep] = useState<"email" | "code">("email");
+  // 节流弹窗：被 429 时展示，倒计时结束前锁定发送按钮
+  const [throttleMsg, setThrottleMsg] = useState<string | null>(null);
 
   // 已有 token 直接跳转
   useEffect(() => {
@@ -49,6 +51,11 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) {
+        // 被节流（429）时：按服务端给的 retryAfterMs 锁定按钮直到窗口释放，并弹弹窗提示
+        if (data.code === "throttled_email" || data.code === "throttled_ip") {
+          setCooldown(Math.min(Math.ceil((data.retryAfterMs ?? 0) / 1000), 600));
+          setThrottleMsg(data.error ?? "发送过于频繁");
+        }
         setError(data.error ?? "发送失败");
         return;
       }
@@ -197,6 +204,42 @@ export default function LoginPage() {
           使用邮箱验证码登录 · 30 天免登
         </footer>
       </div>
+
+      {/* 节流弹窗：固定遮罩，展示剩余等待时间；倒计时结束自动消失 */}
+      {throttleMsg && cooldown > 0 && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-6"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+        >
+          <div
+            className="paper p-6 w-full max-w-sm space-y-4 rounded-lg text-center"
+            style={{ color: "var(--ink)" }}
+          >
+            <h2 className="text-lg font-semibold">发送已被临时限制</h2>
+            <p className="text-sm" style={{ color: "var(--muted)" }}>
+              {throttleMsg}
+            </p>
+            <p className="text-2xl font-mono" aria-live="polite">
+              {Math.floor(cooldown / 60)}:{String(cooldown % 60).padStart(2, "0")}
+            </p>
+            <p className="text-xs" style={{ color: "var(--muted)" }}>
+              倒计时结束后自动解锁；也可关闭弹窗继续输入验证码
+            </p>
+            <button
+              onClick={() => setThrottleMsg(null)}
+              className="w-full py-2 rounded text-sm"
+              style={{
+                background: "var(--border)",
+                color: "var(--ink)",
+              }}
+            >
+              知道了
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

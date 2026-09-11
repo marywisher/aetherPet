@@ -21,6 +21,9 @@ import { getHubIdentity } from "./hub-identity";
 import { loadSmtpConfig } from "./smtp-config";
 import { buildVerificationEmail } from "./email-template";
 import { sendEmail } from "./mail-sender";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("auth");
 
 /**
  * P3-004：审计写入不阻塞业务。
@@ -75,6 +78,11 @@ export async function requestCode(input: RequestCodeInput): Promise<RequestCodeR
         userAgent: input.userAgent ?? null,
         detail: { reason: "email_exceeded", emailHash },
       });
+      logger.warn("requestCode 被节流（邮箱侧）", {
+        emailHash,
+        ip: input.ip ?? null,
+        retryAfterSec: Math.ceil((throttle.retryAfterMs ?? 0) / 1000),
+      });
       return {
         ok: false,
         code: "throttled_email",
@@ -87,6 +95,10 @@ export async function requestCode(input: RequestCodeInput): Promise<RequestCodeR
       ip: input.ip ?? null,
       userAgent: input.userAgent ?? null,
       detail: { reason: "ip_exceeded" },
+    });
+    logger.warn("requestCode 被节流（IP 侧）", {
+      ip: input.ip ?? null,
+      retryAfterSec: Math.ceil((throttle.retryAfterMs ?? 0) / 1000),
     });
     return {
       ok: false,
