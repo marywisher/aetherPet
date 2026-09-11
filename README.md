@@ -41,6 +41,15 @@ See [`docs/dev-stage-plan.md`](docs/dev-stage-plan.md) for the full plan and [`d
 
 ## Quick start (development)
 
+### Windows PowerShell
+
+If PowerShell blocks `npm`, use `npm.cmd` instead:
+
+```powershell
+npm.cmd install
+npm.cmd run db:up
+npm.cmd run dev
+```
 Prerequisites: Node ≥ 20, Docker (for local MySQL), npm.
 
 ```bash
