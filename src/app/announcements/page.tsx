@@ -1,4 +1,5 @@
 "use client";
+import { APP_NAME_DEFAULT } from "@/config/client-brand";
 
 /**
  * 文件名称：page.tsx
@@ -167,7 +168,7 @@ function AnnouncementsInner() {
             公告
           </h1>
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            {packDisplayName ?? "AetherPet"} · 低频触达 · 倒序列表
+            {packDisplayName ?? APP_NAME_DEFAULT} · 低频触达 · 倒序列表
           </p>
         </div>
         <div className="flex items-center gap-3 text-xs" style={{ color: "var(--muted)" }}>

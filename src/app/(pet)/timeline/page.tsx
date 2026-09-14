@@ -1,4 +1,5 @@
 "use client";
+import { APP_NAME_DEFAULT } from "@/config/client-brand";
 
 /**
  * 文件名称：page.tsx
@@ -19,15 +20,13 @@
  *   - 无回复按钮：UI 层强制（requirements §3.5"宠物单向输出、无社交压力"）
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ThemeProvider, useTheme } from "@/ui/theme-provider";
-import {
-  TimelineView,
-  TimelineEntryCard,
-  type TimelineApiResponse,
-} from "@/ui/timeline";
+import { runSyncOnce } from "@/lib/sync-client";
+import { splitEventsByTs } from "@/lib/timeline-split";
+import { TimelineView, type TimelineApiResponse } from "@/ui/timeline";
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -41,8 +40,25 @@ function TimelineInner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // 首次加载前触发一次补算同步；翻页 / 筛选不重复触发（服务端幂等）
+  const syncedRef = useRef(false);
+  // 本次离线窗口起点（sync.catchup.offlineStartTs）：用于“你不在的时候”新旧分隔
+  const [offlineStartTs, setOfflineStartTs] = useState<number | null>(null);
+  // 新事件计数（离线窗口内，ts >= offlineStartTs；用于“你不在的时候”提示条）
+  const freshCount = useMemo(
+    () => splitEventsByTs(data?.events ?? [], offlineStartTs).fresh.length,
+    [data, offlineStartTs]
+  );
+
   const load = useCallback(
     async (p: number, size: number) => {
+      if (!syncedRef.current) {
+        syncedRef.current = true;
+        const sync = await runSyncOnce();
+        if (sync?.catchup?.offlineStartTs) {
+          setOfflineStartTs(sync.catchup.offlineStartTs);
+        }
+      }
       setLoading(true);
       setError(null);
       try {
@@ -92,7 +108,7 @@ function TimelineInner() {
         className="flex h-screen items-center justify-center"
         style={{ color: "var(--muted)" }}
       >
-        正在唤醒 {packDisplayName ?? packName ?? "AetherPet"}…
+        正在唤醒 {packDisplayName ?? packName ?? APP_NAME_DEFAULT}…
       </div>
     );
   }
@@ -119,9 +135,6 @@ function TimelineInner() {
   }
 
   const petName = data.pet.name;
-  const agg = data.latestAggregate;
-  const spanDays = agg?.event.aggregateSpanDays ?? 0;
-  const eventCount = data.total ?? data.events.length;
 
   return (
     <div className="max-w-2xl mx-auto p-6 pb-32 space-y-4">
@@ -131,7 +144,7 @@ function TimelineInner() {
             {petName} 的时间线
           </h1>
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            {packDisplayName ?? packName ?? "AetherPet"} · 单一时间轴 · 无社交压力
+            {packDisplayName ?? packName ?? APP_NAME_DEFAULT} · 单一时间轴 · 无社交压力
           </p>
         </div>
         <Link href="/" className="text-xs underline" style={{ color: "var(--muted)" }}>
@@ -139,20 +152,7 @@ function TimelineInner() {
         </Link>
       </header>
 
-      {/* 渐进披露入口卡片（阶段 3 验收 #4：30 天场景首屏出现聚合摘要 + 入口卡片） */}
-      {agg && (
-        <TimelineEntryCard
-          petName={petName}
-          spanDays={spanDays}
-          eventCount={eventCount}
-          summary={agg.rendered}
-          onExpand={() => {
-            // 展开 = 聚焦到时间线列表（滚动到下方事件流）
-            document.getElementById("timeline-list")?.scrollIntoView({ behavior: "smooth" });
-          }}
-        />
-      )}
-
+      {/* 若本次有补算/新事件，在列表上方给出低打扰的“新旧”提示条（无社交压力，不用“未读”词） */}
       <section id="timeline-list" className="space-y-2">
         <h2
           className="text-xs font-semibold uppercase tracking-wider"
@@ -160,6 +160,12 @@ function TimelineInner() {
         >
           事件流（第 {page} 页 · {pageSize} 条/页）
         </h2>
+        {freshCount > 0 && (
+          <div className="flex items-center gap-3 py-0.5" style={{ color: "var(--muted)" }}>
+            <span className="text-xs shrink-0">你不在的时候，ta 悄悄发生了 {freshCount} 件事</span>
+            <span className="flex-1 h-px" style={{ background: "currentColor", opacity: 0.35 }} />
+          </div>
+        )}
         <TimelineView
           petName={petName}
           items={data.events}

@@ -10,6 +10,7 @@
 import type { NextRequest } from "next/server";
 import { verifyToken } from "@/domain/auth/token";
 import { extractBearerToken } from "./request-helpers";
+import { readTokenCookie } from "./brand";
 
 export interface AuthResult {
   ok: true;
@@ -25,9 +26,8 @@ export function resolveToken(req: Request): string | null {
   const reqWithHeaders = req as unknown as NextRequest;
   const bearer = extractBearerToken(reqWithHeaders);
   if (bearer) return bearer;
-  const cookies = req.headers.get("cookie") ?? "";
-  const match = cookies.match(/(?:^|;\s*)aetherpet_token=([^;]+)/);
-  return match ? match[1] : null;
+  // cookie 名来自 .env 的 APP_BRAND_KEY（默认 aetherpet_token），服务端统一解析
+  return readTokenCookie(req.headers.get("cookie"));
 }
 
 export async function requireAuth(req: Request): Promise<AuthResult | AuthError> {

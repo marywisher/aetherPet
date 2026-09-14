@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { APP_BRAND_KEY_CLIENT } from "@/config/client-brand";
 
 /**
  * 文件名称：export/page.tsx
@@ -37,7 +38,7 @@ export default function ExportPage() {
         return;
       }
       const payload = data.payload;
-      const fileName = `aetherpet-backup-${payload.pet.base.name}-${new Date(payload.meta.exported_at).toISOString().slice(0, 10)}.json`;
+      const fileName = `${APP_BRAND_KEY_CLIENT}-backup-${payload.pet.base.name}-${new Date(payload.meta.exported_at).toISOString().slice(0, 10)}.json`;
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");

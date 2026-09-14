@@ -526,3 +526,54 @@ admin 发布走单事务（公告 + 全 pet 事件一起落，失败整体回滚
 **标签**：`流程` / `技术`
 
 **状态**：`已闭环`
+
+### [2026-09-13] QA 收官：补算/馈赠链路"验收绿、产品断线"（integration gap）
+**问题**：验收手册靠手动 curl `/api/sync` 通过补算/馈赠/回信验收,但前端**从未调用**该端点 → 真实用户登录永远看不到补算。"验收绿"≠"产品可用"。
+**修复**：`src/lib/sync-client.ts` 封装 `runSyncOnce()`(in-flight 去重+失败静默),首页与时间线页首载调用;服务端幂等(offlineMs≤0 不生成)。
+**预防**：审计/验收必须以"真实用户路径(页面→API→领域→DB)"核对,不能只跑接口冒烟。
+**标签**：`流程` / `技术`
+**状态**：`已闭环`
+
+### [2026-09-13] 导入恢复历史 user_last_active_ts → 虚假缺席 → 退避压制回信
+**问题**：导入=恢复快照,恢复出旧的 `user_last_active_ts`;导入后首次登录被判"缺席 N 天"触发退避,`next_proactive_ts` 写入后**只写不清**,
+陈旧值让 `isReplyDue` 一直 `backoff_active`,回信被推迟到过期。
+**修复**：sync 改为**始终写回** `next_proactive_ts`(用户活跃时 SET NULL 清除);已用两次刷新验证(72h→+7d→清零)。
+**预防**：凡"只在非空时写库"的优化,先问"陈旧值何时被清"。
+**标签**：`技术`
+**状态**：`已闭环`
+
+### [2026-09-13] 客户端 import 插入 "use client" 之前会静默失效
+**问题**：脚本把 `import` 插到文件第 1 行,把 `"use client"` 挤成第 2 行 → React 忽略指令,useState 运行时报错但 `tsc` 不报。
+**预防**：客户端文件加 import 必须放在 `"use client";` 之后;批量脚本插入要有 directive 感知。
+**标签**：`技术`
+**状态**：`已闭环`
+
+### [2026-09-13] 品牌名硬编码治理：改名只改 .env
+**要点**：AetherPet/aetherpet 曾散落 30+ 处(cookie 名/邮件头/UI fallback/错误文案)。现抽离 `APP_NAME`/`APP_BRAND_KEY`(+NEXT_PUBLIC_*),
+`src/config/brand.ts`(领域)/`src/lib/brand.ts`(认证)/`src/config/client-brand.ts`(客户端)。
+**预防**：应用名一律走配置；注意 server-only env 不能被客户端 import，品牌走 NEXT_PUBLIC_ 白名单。
+**标签**：`技术`
+**状态**：`已闭环`
+
+### [2026-09-14] 品牌抽离“抽一半”：4 处漏网（<title>/meta/登录 H1/备份文件名）
+**问题**：09-13 宣称“AetherPet 散落 30+ 处已全部抽离”，但实际仍有 4 处硬编码，改名后不会变：
+- `src/app/layout.tsx` 的 `metadata.title` / `description` —— **每个页面的 `<title>` 都靠它**，最显眼；
+- `src/app/login/page.tsx` 的 H1（登录页主标识）；
+- `src/app/import/page.tsx` 的「字段缺失」错误提示文案；
+- `src/app/export/page.tsx` 的备份下载文件名前缀 `aetherpet-backup-`。
+
+**发现方式**：改名回归测试——把 `.env` 改为 `NEXT_PUBLIC_APP_NAME=星野Pet` / `APP_BRAND_KEY=xingye` 重启 dev，
+`curl /login` 抓 HTML grep 品牌字面量，发现 title/H1 仍渲染 AetherPet。静态 grep（`grep -rn "AetherPet" src/`）也能定位，
+但**“改了配置没生效”只有运行时验证能暴露**——grep 只能证明“代码里还有字面量”，不能证明“那处已经接上配置”。
+
+**修复**：layout 走服务端 `appName()`（`@/config/brand`）；login/import 走 `APP_NAME_DEFAULT`；export 走 `APP_BRAND_KEY_CLIENT`；
+新增 `tests/unit/lib/brand.test.ts`（8 例）覆盖默认兜底、改名联动（显示名/邮件头/cookie 名）、`readTokenCookie` 命中新名+忽略旧名、
+`NEXT_PUBLIC_*` 通道；全量 539 passed。
+
+**预防**：
+- “抽离硬编码”类任务必须做**改名回归**（改配置 → 重启 → 运行时抓渲染产物），不能只 grep 就宣布闭环；
+- 抽离完立刻补断言（本例：`tokenCookieName() === "${brandKey()}_token"`），否则下次重构又会漂回去。
+- 客户端页记得 import 必须放在 `"use client"` 之后（见 09-13 同主题坑）。
+
+**标签**：`技术` / `流程`
+**状态**：`已闭环`

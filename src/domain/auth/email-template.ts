@@ -1,3 +1,4 @@
+import { appName, hubHeaderName, hubHeaderDisplayName } from "@/config/brand";
 /**
  * 文件名称：email-template.ts
  * 功能描述：验证码邮件模板（带中心身份标识）
@@ -37,12 +38,12 @@ export function buildVerificationEmail(
   const { code, hub, expiresAt, toEmail } = input;
   const expiresInMin = Math.ceil((expiresAt - Date.now()) / 60_000);
 
-  const subject = `[${hub.hubDisplayName}] 你的 AetherPet 验证码`;
+  const subject = `[${hub.hubDisplayName}] 你的 ${appName()} 验证码`;
 
   const text = [
     `Hi,`,
     ``,
-    `来自「${hub.hubDisplayName}」的 AetherPet 验证码：${code}`,
+    `来自「${hub.hubDisplayName}」的 ${appName()} 验证码：${code}`,
     ``,
     `请在 ${expiresInMin} 分钟内使用。若你不记得发起验证，请忽略此邮件。`,
     ``,
@@ -57,12 +58,12 @@ export function buildVerificationEmail(
 <html>
 <head>
   <meta charset="utf-8">
-  <title>${escapeHtml(hub.hubDisplayName)} - AetherPet 验证码</title>
+  <title>${escapeHtml(hub.hubDisplayName)} - ${appName()} 验证码</title>
 </head>
 <body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;line-height:1.6;color:#3d2f23;max-width:560px;margin:0 auto;padding:24px;">
   <div style="background:#f6efe4;padding:24px;border-radius:8px;">
     <h2 style="margin:0 0 16px 0;font-size:20px;">来自 ${escapeHtml(hub.hubDisplayName)}</h2>
-    <p>你的 AetherPet 验证码是：</p>
+    <p>你的 ${appName()} 验证码是：</p>
     <div style="font-size:32px;font-weight:bold;letter-spacing:8px;background:#fff;padding:16px;border-radius:4px;text-align:center;margin:16px 0;">
       ${escapeHtml(code)}
     </div>
@@ -70,7 +71,7 @@ export function buildVerificationEmail(
   </div>
   <hr style="margin:24px 0;border:none;border-top:1px solid #d4b483;">
   <div style="font-size:12px;color:#666;line-height:1.6;">
-    <p style="margin:0 0 4px 0;"><strong>${escapeHtml(hub.hubDisplayName)}</strong> · AetherPet</p>
+    <p style="margin:0 0 4px 0;"><strong>${escapeHtml(hub.hubDisplayName)}</strong> · ${appName()}</p>
     <p style="margin:0 0 4px 0;">隐私承诺：<a href="${escapeHtml(hub.privacyUrl)}" style="color:#85c485;">${escapeHtml(hub.privacyUrl)}</a></p>
     <p style="margin:0;">管理员联系：<a href="mailto:${escapeHtml(hub.adminEmail)}">${escapeHtml(hub.adminEmail)}</a></p>
   </div>
@@ -85,8 +86,8 @@ export function buildVerificationEmail(
     text,
     html,
     headers: {
-      "X-Aetherpet-Hub": hub.hubId,
-      "X-Aetherpet-Hub-Name": hub.hubDisplayName,
+      [hubHeaderName()]: hub.hubId,
+      [hubHeaderDisplayName()]: hub.hubDisplayName,
       "List-Unsubscribe": `<${hub.privacyUrl}?unsubscribe=1>`,
     },
   };

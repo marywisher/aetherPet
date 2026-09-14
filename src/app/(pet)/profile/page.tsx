@@ -1,4 +1,5 @@
 "use client";
+import { APP_NAME_DEFAULT } from "@/config/client-brand";
 
 /**
  * 文件名称：page.tsx
@@ -154,7 +155,7 @@ function ProfileInner() {
             {pet.name} · 档案
           </h1>
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            {packDisplayName ?? packName ?? "AetherPet"} · 创建于 {formatDate(pet.createdAt)}
+            {packDisplayName ?? packName ?? APP_NAME_DEFAULT} · 创建于 {formatDate(pet.createdAt)}
           </p>
         </div>
         <div className="flex gap-2">

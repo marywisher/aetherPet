@@ -1,4 +1,5 @@
 "use client";
+import { APP_NAME_DEFAULT } from "@/config/client-brand";
 
 /**
  * 文件名称：page.tsx
@@ -7,11 +8,13 @@
  * 验收对齐：docs/dev-stage-plan.md §3 阶段 2 演示步骤 1/2/3
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ThemeProvider, useTheme } from "@/ui/theme-provider";
 import { EventCard } from "@/ui/event-card";
 import { TimelineEntryCard } from "@/ui/timeline";
+import { runSyncOnce } from "@/lib/sync-client";
+import { splitEventsByTs } from "@/lib/timeline-split";
 import type { EventTypeValue, PetState } from "@/domain/types";
 import type { RenderedText } from "@/domain/events/render";
 
@@ -48,6 +51,9 @@ const FORCE_TYPES: EventTypeValue[] = [
   "spontaneous_letter",
 ];
 
+/** 开发工具区是否可见：仅非生产构建（Next.js 客户端构建期静态替换 NODE_ENV） */
+const IS_DEV = process.env.NODE_ENV !== "production";
+
 function HomeInner() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
@@ -62,10 +68,39 @@ function HomeInner() {
     eventCount: number;
     summary: RenderedText | null;
   } | null>(null);
+  // 今日馈赠欢迎卡片（阶段 6 收官：馈赠仪式感；来自 /api/sync 的 dailyGrant）
+  const [dailyWelcome, setDailyWelcome] = useState<
+    | { kind: "granted"; itemName: string }
+    | { kind: "pool_empty"; fallback: string }
+    | null
+  >(null);
+  // 本次离线窗口起点（sync.catchup.offlineStartTs）：用于“你不在的时候”新旧分隔
+  const [offlineStartTs, setOfflineStartTs] = useState<number | null>(null);
   const { packDisplayName, packName } = useTheme();
+
+  // 新旧分组：ts >= 离线起点 = “你不在的时候发生的”，其余为更早的老事件
+  const { fresh, past } = useMemo(
+    () => splitEventsByTs(events, offlineStartTs),
+    [events, offlineStartTs]
+  );
 
   const load = useCallback(async () => {
     try {
+      // 补算同步先行：确保时间线拉到补算后的最新事件（幂等，见 runSyncOnce 注释）
+      const sync = await runSyncOnce();
+      if (sync?.catchup?.offlineStartTs) {
+        setOfflineStartTs(sync.catchup.offlineStartTs);
+      }
+      if (sync?.dailyGrant) {
+        const g = sync.dailyGrant;
+        if (g.granted && g.itemDisplayName) {
+          setDailyWelcome({ kind: "granted", itemName: g.itemDisplayName });
+        } else if (g.skipped === "empty_pool" && g.fallbackMessage) {
+          setDailyWelcome({ kind: "pool_empty", fallback: g.fallbackMessage });
+        } else {
+          setDailyWelcome(null);
+        }
+      }
       const res = await fetch("/api/pet/timeline?total=1", { cache: "no-store" });
       if (res.status === 401) {
         router.push("/login");
@@ -139,7 +174,7 @@ function HomeInner() {
         className="flex h-screen items-center justify-center"
         style={{ color: "var(--muted)" }}
       >
-        正在唤醒 {packDisplayName ?? packName ?? "AetherPet"}…
+        正在唤醒 {packDisplayName ?? packName ?? APP_NAME_DEFAULT}…
       </div>
     );
   }
@@ -152,7 +187,7 @@ function HomeInner() {
             {petName}
           </h1>
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            {packDisplayName ?? packName ?? "AetherPet"} ·{" "}
+            {packDisplayName ?? packName ?? APP_NAME_DEFAULT} ·{" "}
             {petState === "at_home"
               ? "在家"
               : petState === "out_walking"
@@ -176,6 +211,33 @@ function HomeInner() {
         </nav>
       </header>
 
+      {/* 今日馈赠欢迎卡片（阶段 6 收官：馈赠仪式感；sync 自动发放，仅当日首次显示） */}
+      {dailyWelcome && (
+        <section
+          className="rounded-2xl p-4 border"
+          style={{ borderColor: "var(--pack-accent)", background: "var(--pack-paper)" }}
+        >
+          {dailyWelcome.kind === "granted" ? (
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm" style={{ color: "var(--pack-ink)" }}>
+                信箱里多了一个小礼物：「{dailyWelcome.itemName}」。放桌上，看看它会怎么回应吧。
+              </p>
+              <a
+                href="/gifts"
+                className="shrink-0 text-xs rounded-full px-3 py-1"
+                style={{ background: "var(--pack-accent)", color: "#fff" }}
+              >
+                去送礼
+              </a>
+            </div>
+          ) : (
+            <p className="text-sm" style={{ color: "var(--muted)" }}>
+              {dailyWelcome.fallback}
+            </p>
+          )}
+        </section>
+      )}
+
       <section className="space-y-3">
         <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: "var(--muted)" }}>
           最近发生的事
@@ -195,14 +257,30 @@ function HomeInner() {
             还没有事件。点击「触发一次随机事件」生成。
           </div>
         ) : (
-          events.map((it) => (
-            <EventCard
-              key={it.event.id}
-              event={it.event}
-              petName={petName ?? ""}
-              rendered={it.rendered}
-            />
-          ))
+          <>
+            {fresh.length > 0 && (
+              <div className="flex items-center gap-3 py-0.5" style={{ color: "var(--muted)" }}>
+                <span className="text-xs shrink-0">你不在的时候，ta 悄悄发生了 {fresh.length} 件事</span>
+                <span className="flex-1 h-px" style={{ background: "currentColor", opacity: 0.35 }} />
+              </div>
+            )}
+            {fresh.map((it) => (
+              <EventCard
+                key={it.event.id}
+                event={it.event}
+                petName={petName ?? ""}
+                rendered={it.rendered}
+              />
+            ))}
+            {past.map((it) => (
+              <EventCard
+                key={it.event.id}
+                event={it.event}
+                petName={petName ?? ""}
+                rendered={it.rendered}
+              />
+            ))}
+          </>
         )}
         <a
           href="/timeline"
@@ -213,7 +291,8 @@ function HomeInner() {
         </a>
       </section>
 
-      {/* 开发工具区（仅非生产模式） */}
+      {/* 开发工具区（仅非生产构建可见：本地 dev / 测试；生产隐藏，避免 403 死按钮） */}
+      {IS_DEV && (
       <section className="mt-6 p-4 rounded-lg border border-dashed" style={{ borderColor: "var(--muted)" }}>
         <h3 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--muted)" }}>
           开发工具（阶段 2 演示）
@@ -248,6 +327,7 @@ function HomeInner() {
           事件引擎：{petName} 的状态 {petState}；新事件会插入时间线上方。
         </p>
       </section>
+      )}
     </div>
   );
 }

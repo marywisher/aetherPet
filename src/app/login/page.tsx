@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { APP_NAME_DEFAULT } from "@/config/client-brand";
 
 /**
  * 文件名称：login/page.tsx
@@ -106,7 +107,7 @@ export default function LoginPage() {
       <div className="paper p-8 w-full max-w-md space-y-6">
         <header className="text-center space-y-2">
           <h1 className="text-2xl font-semibold" style={{ fontFamily: "KaiTi, serif" }}>
-            AetherPet
+            {APP_NAME_DEFAULT}
           </h1>
           <p className="text-sm" style={{ color: "var(--muted)" }}>
             佛系陪伴 · 隐居模式 · 数据主权

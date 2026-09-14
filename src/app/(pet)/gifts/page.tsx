@@ -1,4 +1,5 @@
 "use client";
+import { APP_NAME_DEFAULT } from "@/config/client-brand";
 
 /**
  * 文件名称：page.tsx
@@ -166,7 +167,7 @@ function GiftsInner() {
             物品栏 · 送给 {petName}
           </h1>
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            {packDisplayName ?? packName ?? "AetherPet"} · 每日馈赠 · 用户主动摆放
+            {packDisplayName ?? packName ?? APP_NAME_DEFAULT} · 每日馈赠 · 用户主动摆放
           </p>
         </div>
         <div className="flex gap-2">

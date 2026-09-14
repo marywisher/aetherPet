@@ -15,6 +15,10 @@ const bool = z
   .transform((v) => (typeof v === "boolean" ? v : ["true", "1"].includes(v)));
 
 export const envSchema = z.object({
+  // ============== 应用品牌（改名只改这里） ==============
+  APP_NAME: z.string().min(1).default("AetherPet"),
+  APP_BRAND_KEY: z.string().min(1).default("aetherpet"),
+
   // ============== 数据库 ==============
   DB_HOST: z.string().min(1).default("127.0.0.1"),
   DB_PORT: z.coerce.number().int().positive().default(3306),

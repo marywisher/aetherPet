@@ -22,6 +22,7 @@ import {
 import { insertAuditLog } from "@/domain/persistence/repos/audit.repo";
 import { sha256 } from "@/domain/util/crypto";
 import { extractClientIp, extractUserAgent, parseJsonBody } from "@/lib/request-helpers";
+import { tokenCookieName } from "@/lib/brand";
 
 const BodySchema = z.object({
   email: z.string().email("邮箱格式不正确").max(254),
@@ -87,14 +88,14 @@ export async function POST(req: Request): Promise<NextResponse> {
     return NextResponse.json({ error: result.message, code: result.code }, { status });
   }
 
-  // token 通过 cookie 存储（HttpOnly 更安全）
+  // token 通过 cookie 存储（HttpOnly 更安全；cookie 名来自 .env APP_BRAND_KEY）
   const res = NextResponse.json({
     ok: true,
     isNewUser: result.isNewUser,
     userId: result.token.userId,
     expiresAt: result.token.expiresAt,
   });
-  res.cookies.set("aetherpet_token", result.token.token, {
+  res.cookies.set(tokenCookieName(), result.token.token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

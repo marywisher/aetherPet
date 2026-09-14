@@ -1,4 +1,5 @@
 "use client";
+import { APP_BRAND_KEY_CLIENT } from "@/config/client-brand";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -144,7 +145,7 @@ export default function SettingsPage() {
                     await fetch("/api/auth/logout", { method: "POST" });
                   } catch {
                     // 即使 API 失败也强制清 cookie 并跳转
-                    document.cookie = "aetherpet_token=; Max-Age=0; Path=/";
+                    document.cookie = `${APP_BRAND_KEY_CLIENT}_token=; Max-Age=0; Path=/`;
                   } finally {
                     router.replace("/login");
                   }

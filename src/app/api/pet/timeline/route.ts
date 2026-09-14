@@ -22,6 +22,7 @@
 import { NextResponse } from "next/server";
 import { verifyToken } from "@/domain/auth/token";
 import { extractBearerToken } from "@/lib/request-helpers";
+import { readTokenCookie } from "@/lib/brand";
 import { findByUserId } from "@/domain/persistence/repos/pets.repo";
 import {
   findByPetId as findEvents,
@@ -36,9 +37,7 @@ import { buildAnnouncePlaceholderMap, withAnnouncePlaceholders } from "@/lib/ren
 export async function GET(req: Request): Promise<NextResponse> {
   // 1) 鉴权（Bearer + cookie 双模式，沿用项目惯例）
   const reqWithHeaders = req as unknown as import("next/server").NextRequest;
-  const cookies = req.headers.get("cookie") ?? "";
-  const match = cookies.match(/(?:^|;\s*)aetherpet_token=([^;]+)/);
-  const token = extractBearerToken(reqWithHeaders) ?? (match ? match[1] : null);
+  const token = extractBearerToken(reqWithHeaders) ?? readTokenCookie(req.headers.get("cookie"));
 
   if (!token) return NextResponse.json({ error: "未登录" }, { status: 401 });
   const session = await verifyToken(token);

@@ -1,3 +1,4 @@
+import { hubHeaderName } from "@/config/brand";
 /**
  * 文件名称：mail-sender.ts
  * 功能描述：邮件发送器（Nodemailer 封装）
@@ -52,7 +53,7 @@ export async function sendEmail(payload: EmailPayload): Promise<SendResult> {
           to: payload.to,
           subject: payload.subject,
           dryRun: true,
-          hubId: payload.headers["X-Aetherpet-Hub"],
+          hubId: payload.headers[hubHeaderName()],
         },
       });
     } catch (err) {
@@ -78,7 +79,7 @@ export async function sendEmail(payload: EmailPayload): Promise<SendResult> {
           to: payload.to,
           subject: payload.subject,
           dryRun: false,
-          hubId: payload.headers["X-Aetherpet-Hub"],
+          hubId: payload.headers[hubHeaderName()],
           messageId: result.messageId,
         },
       });
@@ -95,7 +96,7 @@ export async function sendEmail(payload: EmailPayload): Promise<SendResult> {
           to: payload.to,
           subject: payload.subject,
           dryRun: false,
-          hubId: payload.headers["X-Aetherpet-Hub"],
+          hubId: payload.headers[hubHeaderName()],
           error: message,
         },
       });

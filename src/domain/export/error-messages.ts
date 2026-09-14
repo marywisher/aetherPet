@@ -1,3 +1,4 @@
+import { appName } from "@/config/brand";
 /**
  * 文件名称：error-messages.ts
  * 功能描述：导入三类失败的集中错误文案 + HTTP 状态映射
@@ -50,7 +51,7 @@ export const IMPORT_ERRORS: Record<ImportErrorKind, ImportErrorInfo> = {
   ERR_FIELD_MISSING: {
     kind: "ERR_FIELD_MISSING",
     code: "ERR_FIELD_MISSING",
-    message: "导入失败：备份文件缺少必要字段，不是一份完整的 AetherPet 导出文件。",
+    message: "导入失败：备份文件缺少必要字段，不是一份完整的 " + appName() + " 导出文件。",
     detail: "必需字段缺失或类型错误",
     status: 422,
   },

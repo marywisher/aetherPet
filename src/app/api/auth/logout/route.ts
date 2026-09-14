@@ -10,18 +10,18 @@ import { NextResponse } from "next/server";
 import { verifyToken, revokeToken } from "@/domain/auth/token";
 import { insertAuditLog } from "@/domain/persistence/repos/audit.repo";
 import { extractClientIp, extractBearerToken } from "@/lib/request-helpers";
+import { readTokenCookie, tokenCookieName } from "@/lib/brand";
 
 export async function POST(req: Request): Promise<NextResponse> {
   // P3-003：Bearer 优先，cookie 兜底（与 me/pet/pet/create 一致）
-  const cookies = req.headers.get("cookie") ?? "";
-  const cookieMatch = cookies.match(/(?:^|;\s*)aetherpet_token=([^;]+)/);
   const reqWithHeaders = req as unknown as import("next/server").NextRequest;
-  const token = extractBearerToken(reqWithHeaders) ?? (cookieMatch ? cookieMatch[1] : null);
+  const token = extractBearerToken(reqWithHeaders)
+    ?? readTokenCookie(req.headers.get("cookie"));
 
   if (!token) {
     // 直接返回 200，同时清 cookie
     const res = NextResponse.json({ ok: true });
-    res.cookies.set("aetherpet_token", "", { maxAge: 0, path: "/" });
+    res.cookies.set(tokenCookieName(), "", { maxAge: 0, path: "/" });
     return res;
   }
 
@@ -42,6 +42,6 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
 
   const res = NextResponse.json({ ok: true });
-  res.cookies.set("aetherpet_token", "", { maxAge: 0, path: "/" });
+  res.cookies.set(tokenCookieName(), "", { maxAge: 0, path: "/" });
   return res;
 }

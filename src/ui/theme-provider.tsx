@@ -1,4 +1,5 @@
 "use client";
+import { APP_BRAND_KEY_CLIENT } from "@/config/client-brand";
 
 import { useEffect, useState, createContext, useContext } from "react";
 
@@ -71,7 +72,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           root.style.setProperty("--pack-ink", palette.ink);
 
           // 通过 link 标签注入 theme.css（Next.js 会自动缓存）
-          const linkId = "aetherpet-pack-css";
+          const linkId = `${APP_BRAND_KEY_CLIENT}-pack-css`;
           let link = document.getElementById(linkId) as HTMLLinkElement | null;
           if (!link) {
             link = document.createElement("link");

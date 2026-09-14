@@ -87,6 +87,7 @@ export function GiftTray({
                 inventory={inv}
                 item={itemsCatalog.get(inv.itemId)}
                 disabled={offerDisabled || offeredToday || offerLoading}
+                petName={petName}
                 onOffer={() => onOffer(inv.id)}
               />
             ))}
@@ -106,11 +107,13 @@ function InventoryCard({
   inventory,
   item,
   disabled,
+  petName,
   onOffer,
 }: {
   inventory: Inventory;
   item: Item | undefined;
   disabled: boolean;
+  petName: string;
   onOffer: () => void;
 }) {
   const name = item?.displayName ?? inventory.itemId;
@@ -125,7 +128,7 @@ function InventoryCard({
     <button
       onClick={onOffer}
       disabled={disabled}
-      aria-label={`把 ${name} 送给 pet`}
+      aria-label={`把 ${name} 送给 ${petName}`}
       className="rounded-lg p-3 text-left space-y-1 hover:opacity-95"
       style={{
         background: "var(--pack-paper)",
@@ -162,7 +165,7 @@ function InventoryCard({
         </div>
       )}
       <div className="text-xs" style={{ color: "var(--pack-primary)" }}>
-        {disabled ? "—" : "送给 pet →"}
+        {disabled ? "—" : `送给 ${petName} →`}
       </div>
     </button>
   );

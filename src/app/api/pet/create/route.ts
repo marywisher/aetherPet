@@ -18,6 +18,7 @@ import { insertAuditLog } from "@/domain/persistence/repos/audit.repo";
 import { getHubIdentity } from "@/domain/auth/hub-identity";
 import { generateBatchEvents } from "@/domain/events";
 import { extractClientIp, extractBearerToken, parseJsonBody } from "@/lib/request-helpers";
+import { readTokenCookie } from "@/lib/brand";
 
 const BodySchema = z.object({
   name: z
@@ -36,9 +37,7 @@ const BodySchema = z.object({
 
 export async function POST(req: Request): Promise<NextResponse> {
   const reqWithHeaders = req as unknown as import("next/server").NextRequest;
-  const cookies = req.headers.get("cookie") ?? "";
-  const match = cookies.match(/(?:^|;\s*)aetherpet_token=([^;]+)/);
-  const token = extractBearerToken(reqWithHeaders) ?? (match ? match[1] : null);
+  const token = extractBearerToken(reqWithHeaders) ?? readTokenCookie(req.headers.get("cookie"));
 
   if (!token) return NextResponse.json({ error: "未登录" }, { status: 401 });
   const session = await verifyToken(token);

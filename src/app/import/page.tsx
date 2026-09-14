@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { APP_NAME_DEFAULT } from "@/config/client-brand";
 
 /**
  * 文件名称：import/page.tsx
@@ -35,7 +36,7 @@ const ERR_COPY: Record<string, { title: string; hint: string } | undefined> = {
   },
   ERR_FIELD_MISSING: {
     title: "字段缺失",
-    hint: "文件不完整或有结构问题，不是一份完整的 AetherPet 备份。",
+    hint: `文件不完整或有结构问题，不是一份完整的 ${APP_NAME_DEFAULT} 备份。`,
   },
   ERR_NOT_JSON: {
     title: "不是合法的 JSON",

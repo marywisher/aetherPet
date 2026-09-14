@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { appName } from "@/config/brand";
 import { ThemeProvider } from "@/ui/theme-provider";
 
 const geistSans = Geist({
@@ -13,9 +14,13 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+/**
+ * 元信息标题/描述的品牌名同样走 .env（APP_NAME）：
+ * 改名只改 .env，不改动代码。服务端布局，可直接读 config/brand（非 NEXT_PUBLIC 通道）。
+ */
 export const metadata: Metadata = {
-  title: "AetherPet · 佛系陪伴",
-  description: "AetherPet 官方默认素材包 · 手绘暖调 · 隐居模式",
+  title: `${appName()} · 佛系陪伴`,
+  description: `${appName()} 官方默认素材包 · 手绘暖调 · 隐居模式`,
 };
 
 export default function RootLayout({

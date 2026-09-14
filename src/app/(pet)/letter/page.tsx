@@ -1,4 +1,5 @@
 "use client";
+import { APP_NAME_DEFAULT } from "@/config/client-brand";
 
 /**
  * 文件名称：page.tsx
@@ -120,7 +121,7 @@ function LettersInner() {
             回信
           </h1>
           <p className="text-xs" style={{ color: "var(--muted)" }}>
-            {packDisplayName ?? packName ?? "AetherPet"} · {petName} 写给你的信
+            {packDisplayName ?? packName ?? APP_NAME_DEFAULT} · {petName} 写给你的信
           </p>
         </div>
         <div className="flex gap-2">

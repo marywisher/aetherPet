@@ -8,7 +8,7 @@
  *   - docs/dev-stage-plan.md §3 阶段 3 同步 API
  *   - docs/architecture.md §4.3.1 补算时序、§9 R3 补算性能（打点日志 <500ms）
  *
- * 鉴权：Bearer token 或 cookie `aetherpet_token`（沿用项目双模式）
+ * 鉴权：Bearer token 或 cookie `${APP_BRAND_KEY}_token`（沿用项目双模式；cookie 名来自 .env）
  *
  * 本阶段（阶段 3）交付范围：
  *   - 补算触发：planCatchUp + executeCatchUp（事务内 INSERT + UPDATE pets）
@@ -108,18 +108,18 @@ export async function GET(req: Request): Promise<NextResponse> {
     catchupDurationMs = Date.now() - catchupStartedAt;
   }
 
-  // 4b) P1-001 修复：将 backoff.nextProactiveTs 写回 pets 表，
-  //     使 reply.ts::isReplyDue 的 backoff_active 分支在生产环境生效。
+  // 4b) P1-001 修复：将 backoff.nextProactiveTs 写回 pets 表。
   //     旧实现仅将 nextProactiveTs 返回给客户端，DB 中字段恒为 null，
   //     导致"离开 3 天 → 退避 7 天"的回信延迟机制形同虚设。
-  //     仅在 nextProactiveTs 非 null（缺席 ≥ 24h）时写库，节省每日登录时的 UPDATE。
-  if (backoff.nextProactiveTs !== null) {
-    try {
-      await updateNextProactiveTs(pet.id, backoff.nextProactiveTs);
-    } catch (err) {
-      // 写失败不阻断同步：只影响退避联动，不影响本次 catchup / reply / grant
-      console.error(`[sync] persist next_proactive_ts failed pet=${pet.id}:`, err);
-    }
+  // 阶段 6 收官（P1-001 遗留修复）：改为「始终写回」——
+  //     用户已恢复正常活跃（absence < 24h）时，nextProactiveTs 为 null，
+  //     同样写回（SET NULL）以清除陈旧值，避免导入/历史遗留的退避时间戳
+  //     长期压制 isReplyDue（回信被无限推迟到过期）。
+  try {
+    await updateNextProactiveTs(pet.id, backoff.nextProactiveTs);
+  } catch (err) {
+    // 写失败不阻断同步：只影响退避联动，不影响本次 catchup / reply / grant
+    console.error(`[sync] persist next_proactive_ts failed pet=${pet.id}:`, err);
   }
 
   // 4c) P2-002 修复：catchup 已写入 last_activity_ts / state / user_last_active_ts，
@@ -231,6 +231,9 @@ export async function GET(req: Request): Promise<NextResponse> {
       eventCount: catchupEventCount,
       aggregated: catchupAggregated,
       offlineDays: plan.offlineDays,
+      // 本次离线窗口起点（= pet 上次活跃时间）：前端用它把时间线上
+      // ts >= offlineStartTs 的事件识别为“你不在的时候发生的”（新旧分隔）
+      offlineStartTs: fromTs,
       ...(catchupSkipped ? { skipped: catchupSkipped } : {}),
     },
     backoff: {

@@ -1,3 +1,4 @@
+import { appName } from "@/config/brand";
 /**
  * 文件名称：fallback.ts
  * 功能描述：损坏包回退 + 空包降级
@@ -17,7 +18,7 @@ export const EMPTY_PACK_MANIFEST: PackManifest = {
   version: "1.0.0",
   pack_schema_version: "1.0.0",
   min_engine_version: "1.0.0",
-  author: "AetherPet core",
+  author: `${appName()} core`,
   license: "MIT",
   theme: {
     css: "",
@@ -87,7 +88,7 @@ export function applyFallback(
     manifest: EMPTY_PACK_MANIFEST,
     path: "",
     webPath: "",
-    themeCssContent: "/* AetherPet fallback */",
+    themeCssContent: `/* ${appName()} fallback */`,
     images: {},
     texts: {},
     audio: {},

@@ -9,6 +9,7 @@
  */
 
 import { getEnv } from "@/config/env";
+import { appName } from "@/config/brand";
 import { setManyMeta, getMeta } from "../persistence/repos/meta.repo";
 import type { HubIdentity } from "../types";
 
@@ -62,7 +63,7 @@ export async function getHubIdentityFromMeta(): Promise<HubIdentity | null> {
   if (!hubId) return null;
   return {
     hubId,
-    hubDisplayName: displayName || "AetherPet",
+    hubDisplayName: displayName || appName(),
     adminEmail: adminEmail || "",
     privacyUrl: privacyUrl || "",
     domain: domain || "",

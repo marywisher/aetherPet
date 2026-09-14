@@ -386,9 +386,9 @@ export function TimelineEntryCard({
         >
           过去 {spanLabel}
         </span>
-        <span className="text-xs" style={{ color: "var(--muted)" }}>
-          {eventCount} 件事 · 点击展开
-        </span>
+      <span className="text-xs" style={{ color: "var(--muted)" }}>
+        {eventCount} 件事 · 看看这段日子
+      </span>
       </div>
       {summary && (summary.title || summary.body) ? (
         <p

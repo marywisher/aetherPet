@@ -8,12 +8,12 @@ import { NextResponse } from "next/server";
 import { verifyToken } from "@/domain/auth/token";
 import { findById } from "@/domain/persistence/repos/users.repo";
 import { extractBearerToken } from "@/lib/request-helpers";
+import { readTokenCookie } from "@/lib/brand";
 
 export async function GET(req: Request): Promise<NextResponse> {
-  const cookies = req.headers.get("cookie") ?? "";
-  const cookieMatch = cookies.match(/(?:^|;\s*)aetherpet_token=([^;]+)/);
-  const token = extractBearerToken(req as unknown as import("next/server").NextRequest)
-    ?? (cookieMatch ? cookieMatch[1] : null);
+  const token =
+    extractBearerToken(req as unknown as import("next/server").NextRequest)
+    ?? readTokenCookie(req.headers.get("cookie"));
 
   if (!token) {
     return NextResponse.json({ error: "未登录" }, { status: 401 });
