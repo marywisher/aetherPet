@@ -108,6 +108,20 @@ export async function findByUserId(userId: string): Promise<Pet[]> {
   return rows.map(rowToPet);
 }
 
+/**
+ * 查询用户最新 pet 的当前生效素材包名
+ * 供 /api/packs 按用户返回 current（切包后列表/主题/“使用中”判定跟随）；无 pet 返回 null
+ */
+export async function findLatestActivePackName(userId: string): Promise<string | null> {
+  const pool = getPool();
+  const row = await queryOne<{ active_pack_name: string }>(
+    pool,
+    "SELECT active_pack_name FROM pets WHERE user_id = ? ORDER BY created_at DESC LIMIT 1",
+    [userId]
+  );
+  return row ? row.active_pack_name : null;
+}
+
 /** 更新用户活跃度（登录/任意操作） */
 export async function touchUserActivity(petId: string, ts: number = Date.now()): Promise<void> {
   const pool = getPool();

@@ -20,7 +20,7 @@
  *   - 无回复按钮（UI 强制；requirements §3.5"宠物单向输出、无社交压力"）
  */
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { EventCard } from "./event-card";
 import type { EventTypeValue, PetState } from "@/domain/types";
 import type { RenderedText, HighlightToken } from "@/domain/events/render";
@@ -164,6 +164,11 @@ export interface TimelineViewProps {
   showLoadMore?: boolean;
   /** 是否显示记忆引用角标（默认 true；用于阶段 3 记忆高亮验收） */
   showMemoryRefs?: boolean;
+  /**
+   * 新旧分隔线：在第一条旧事件（ts < dividerAfterTs）前插入“更早之前”分割线。
+   * 仅当新旧都非空时显示。语义 = sync.catchup.offlineStartTs。
+   */
+  dividerAfterTs?: number | null;
 }
 
 /**
@@ -195,6 +200,7 @@ export function TimelineView({
   showTypeFilter = true,
   showLoadMore = true,
   showMemoryRefs = true,
+  dividerAfterTs = null,
 }: TimelineViewProps) {
   const [activeTypes, setActiveTypes] = useState<Set<EventTypeValue>>(new Set());
 
@@ -217,6 +223,14 @@ export function TimelineView({
     items.forEach((it) => set.add(it.event.type));
     return Array.from(set);
   }, [items]);
+
+  // 新旧分隔线位置：在过滤后的列表里找第一个“旧事件”（ts < dividerAfterTs）。
+  // idx === -1 → 全是新事件不插线；idx === 0 → 全是旧事件不插线；idx > 0 → 新旧并存，在 idx 前插线。
+  const dividerIndex = useMemo(() => {
+    if (dividerAfterTs == null || !Number.isFinite(dividerAfterTs)) return -1;
+    return displayed.findIndex((it) => it.event.ts < (dividerAfterTs as number));
+  }, [displayed, dividerAfterTs]);
+  const showDivider = dividerIndex > 0;
 
   const totalPages = total !== undefined ? Math.max(1, Math.ceil(total / pageSize)) : 1;
 
@@ -285,15 +299,23 @@ export function TimelineView({
       )}
 
       {!loading &&
-        displayed.map((it) => (
-          <div key={it.event.id} className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <TypeTag type={it.event.type} />
-              <StateBadge state={it.event.fsmState} />
-              {showMemoryRefs && <HighlightTokens tokens={it.rendered.highlightTokens} />}
+        displayed.map((it, idx) => (
+          <Fragment key={it.event.id}>
+            {showDivider && idx === dividerIndex && (
+              <div className="flex items-center gap-3 py-0.5" style={{ color: "var(--muted)" }}>
+                <span className="text-xs shrink-0">更早之前</span>
+                <span className="flex-1 h-px" style={{ background: "currentColor", opacity: 0.35 }} />
+              </div>
+            )}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <TypeTag type={it.event.type} />
+                <StateBadge state={it.event.fsmState} />
+                {showMemoryRefs && <HighlightTokens tokens={it.rendered.highlightTokens} />}
+              </div>
+              <EventCard event={it.event} petName={petName} rendered={it.rendered} />
             </div>
-            <EventCard event={it.event} petName={petName} rendered={it.rendered} />
-          </div>
+          </Fragment>
         ))}
 
       {!loading && (showLoadMore || totalPages > 1) && (
