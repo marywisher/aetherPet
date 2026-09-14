@@ -151,12 +151,16 @@ curl http://localhost:30219/api/healthz   # 存活
 - **今日无补算事件**（离线窗口 < 1 天）→ 分割线提示条今天不会出现；仍需真实跨天回归场景观察。
 
 ### 9.5 §5 待办状态（接上）
-- [ ] **8 素材包切换**：仍需浏览器（`/developer` 切 morning）。
-- [ ] **11 安全恢复**：登录页节流 UI + `/account/help` 需浏览器；`last_backup_hash` 已查库确认。
+- [x] **8 素材包切换（已验，09-14）**：morning/night 切换、视觉/文案差异、`active_pack_name` 与审计均验。
+- [x] **11 安全恢复（已验，09-14）**：三层全部过——服务端 429（`throttled_email` + 5min）；
+  前端遮罩弹窗 + 倒计时 + 按钮锁定；`/api/profile` 返回 emailHash/lastBackupHash/createdAt；
+  申诉页入口齐全。坑：HMR 断连一度让页面点击无反应，根因是 Next 16 `allowedDevOrigins`
+  拒绝 127.0.0.1 origin（详见 pitfalls 09-14 条目）。
 - [x] **7 错误分支文案（已用 API 自验，09-14 08:55）**：结果见 §9.6。
-- [ ] **分割线自然验收**：等真实跨天回归。
-- [ ] **git 提交收官**：当前 **37 files changed**（较 09-13 增：4 处品牌修复 + 1 个新测试文件 + 2 个文档追加）。
-  建议提交信息：`feat(stage-6): QA 收官修复(补算接线/品牌抽离/退避写回/文案)`，未提交前需用户拍板。
+- [x] **分割线（已验，09-14）**：首次刷新补算出现 -> 新事件/「更早之前」/旧事件；
+  二次刷新不消失（`pets.offline_start_ts` 锚点持久化，见 §9.7）。
+- [ ] **git 提交收官**：本会话已分批提交（端口/导航/素材包 night/分割线锚点/psats 修复），
+  工作区应已干净；最终阶段收尾提交信息可参考 `feat(stage-6): QA 收官修复(补算接线/品牌抽离/退避写回/文案)`。
 - [ ] （可选）UI 组件测试基建（jsdom + testing-library）尚未引入。
 - [ ] （可选）`docs/asset-prompts.md` 素材图可用 agnes-image 生成。
 
@@ -182,3 +186,20 @@ curl http://localhost:30219/api/healthz   # 存活
 - **失败无残留**：四次失败导入后 现场数据完全未变（events 26 / memories 3 / inventory 2 / pets 1），
   且写入了 4 条 `audit_log.import_failed`（detail 带 code）——导入失败可溯源。
 - 前端文案映射：`src/app/import/page.tsx` 的 `ERR_COPY`（按 code 分 5 类：版本/校验和/字段/非 JSON/过大）。
+
+### 9.7 分割线锚点持久化（09-14，验收 #4/#5 收尾）
+
+**用户反馈**：分割线首次刷新在新事件顶部（其实是首页残留的旧样式横线），二次刷新直接消失。
+
+**根因**：`offlineStartTs` 来自 sync 本次补算窗口起点；补算后 `last_activity_ts` 被推进，
+下次刷新无窗口 → `offlineStartTs` 无意义 → fresh 空 → 提示条/分割线消失。首页也残留旧的
+「文字+横线在列表顶部」样式（分隔线应在新旧之间）。
+
+**修复**：
+1. migration `003_add_pets_offline_start.sql`：`pets.offline_start_ts` 持久化最近一次补算起点。
+2. executor 补算事务写 `offline_start_ts = fromTs`（COALESCE 保留旧值，无窗口不覆盖）。
+3. sync 响应：有补算 → 本次起点；无补算 → 读持久化值（锚点跨刷新稳定）。
+4. 首页/时间线页统一：顶部纯文字提示（无横线）+ 新事件 → 「更早之前」分割线 → 旧事件。
+
+**实测**：造数 3 天 → 第 1 次 sync 补算 3 事件、锚点=3 天前；第 2 次 sync 无补算但锚点不变。
+**注意**：`offline_start_ts` 未纳入导出/导入（导入后为 NULL，下次补算重建），已是预期。

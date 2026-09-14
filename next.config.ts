@@ -16,6 +16,12 @@ const nextConfig: NextConfig = {
   /* 阶段 6 部署：产出 .next/standalone 自包含服务器（PM2 / Docker 均可用） */
   output: "standalone",
 
+  /* Next 16 开发态 Origin 安全校验（防 DNS rebinding）：
+     默认只信任 localhost，用户从 http://127.0.0.1:30219 访问时
+     HMR WebSocket 握手会因 Origin 不在允许列表被拒（ERR_INVALID_HTTP_RESPONSE，3 秒重连一次）。
+     显式放行 127.0.0.1 与 localhost，保持开发体验。 */
+  allowedDevOrigins: ["127.0.0.1", "localhost"],
+
   /* 把运行时按路径读取的目录纳入 standalone trace（保持相对路径不变）：
      - src/domain/persistence/migrations/*.sql（migration runner 按
        process.cwd()/src/domain/persistence/migrations 读取）

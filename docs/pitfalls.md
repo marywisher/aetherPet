@@ -577,3 +577,25 @@ admin 发布走单事务（公告 + 全 pet 事件一起落，失败整体回滚
 
 **标签**：`技术` / `流程`
 **状态**：`已闭环`
+
+### [2026-09-14] Next 16 开发态 Origin 校验：127.0.0.1 访问时 HMR WebSocket 握手被拒
+**问题**：dev server 改端口后从 `http://127.0.0.1:30219` 访问，浏览器 console 每 3 秒刷一次
+`WebSocket connection to 'ws://127.0.0.1:30219/_next/hmr' failed ... ERR_INVALID_HTTP_RESPONSE`；
+同一端口下 curl 不带 Origin 握手成功（101），带 `Origin: http://127.0.0.1:30219` 却失败（000）——
+典型的 Next 16 `allowedDevOrigins` 安全校验（防 DNS rebinding）。日志同时打出
+`allowedDevOrigins: ['127.0.0.1']` 建议配置。HMR 断连还会连带页面 JS 交互异常（点击无反应），
+导致登录节流验收一度“服务端验证绿、浏览器无法复现”。
+
+**根因**：Next 16.3+ 对 WebSocket/敏感请求做 Origin 校验，默认 allowlist 不含 127.0.0.1 上的 origin；
+而 curl 不带 Origin 头绕过了校验，掩盖了问题——又是“我这边验证绿、用户浏览器红”的接线盲区。
+
+**修复**：`next.config.ts` 加 `allowedDevOrigins: ["127.0.0.1", "localhost"]`；重启生效
+（实测带 Origin 握手 000 → 101，警告清零）。
+
+**预防**：
+- 改监听地址/端口后，必须用「带 Origin 头的 curl/浏览器」验证一遍 ws 握手，不能只用裸 curl；
+- 前端交互“点了没反应”先看 console 是否有持续 ws/HMR 报错，优先排查 dev 网络层而非业务代码；
+- 部署形态变化（端口/域名/反代）后检查 Next 的 origin 相关配置。
+
+**标签**：`环境` / `技术`
+**状态**：`已闭环`
