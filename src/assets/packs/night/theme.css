@@ -1,0 +1,18 @@
+/* AetherPet 备用素材包 · night · theme.css */
+/* 开发者模式切换验证用：深色夜色系，与 default/morning 形成明显视觉差异 */
+
+:root {
+  --pack-primary: #8ea8d8;
+  --pack-accent: #d9b36a;
+  --pack-memory-ref: #5f6f8f;
+  --pack-paper: #1b2230;
+  --pack-ink: #e3e8f2;
+  --pack-muted: #9aa7bd;
+  --pack-border: #333d52;
+
+  --pack-font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
+  --pack-font-title: "Songti SC", "STSong", "SimSun", serif;
+
+  --pack-radius: 12px;
+  --pack-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}

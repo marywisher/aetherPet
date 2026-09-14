@@ -13,7 +13,9 @@
       "accent": "#8e7cc3",
       "memory_ref": "#a1c4e6",
       "paper": "#f4f7fa",
-      "ink": "#243447"
+      "ink": "#243447",
+      "muted": "#7d8a9a",
+      "border": "#c8d3dd"
     }
   },
   "assets": {

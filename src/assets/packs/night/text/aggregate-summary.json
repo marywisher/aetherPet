@@ -1,0 +1,27 @@
+{
+  "title": { "mode": "fixed", "default": "{pet_name}" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "过去 {span_days} 我出门 {outings} 次，捡到 {items_collected}",
+        "这段时间我过得还行，出门 {outings} 次，带了 {items_collected} 回来",
+        "总结：{span_days} 内 {outings} 次散步，收集到 {items_collected}",
+        "{pet_name} 过去 {span_days} 的日子：出门 {outings} 次，收集 {items_collected}",
+        "这段时间过得挺充实，{outings} 次出门不算多也不算少",
+        "把 {items_collected} 都摆好了，你来看看",
+        "过去 {span_days} 里最好的一天是捡到 {items_collected} 那天",
+        "这 {span_days} 里我最开心的就是收集到 {items_collected}"
+      ],
+      "poetic": [
+        "我把 {span_days} 折成一只纸鹤，肚子里装着 {items_collected}",
+        "{outings} 次路，{items_collected} 都是你给的",
+        "日子太轻了，得靠 {items_collected} 压一压才留得下"
+      ]
+    },
+    "poetic_ratio": 0.1
+  },
+  "sign_off": { "mode": "fixed", "default": "—— {pet_name}" },
+  "recall_required": ["pet_name"],
+  "recall_min_count": 0
+}

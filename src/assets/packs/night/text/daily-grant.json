@@ -1,0 +1,27 @@
+{
+  "title": { "mode": "fixed", "default": "{pet_name}" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "今天收到 {item}，谢谢！",
+        "早上的阳光里发现 {item}，放在桌上了",
+        "{item} 出现在窗台上，是你放的吧",
+        "{pet_name} 今天收到 {item}",
+        "收到 {item}，比想象中小了一点，但很喜欢",
+        "我把 {item} 放在你常坐的位置",
+        "今天运气不错，收到 {item}",
+        "{item} 上还贴着标签，我没舍得撕"
+      ],
+      "poetic": [
+        "我把 {item} 抱在怀里，等你的脚步声",
+        "清晨的 {item} 像一颗刚醒的心",
+        "今天的第一份礼物是 {item}，第二份是你"
+      ]
+    },
+    "poetic_ratio": 0.1
+  },
+  "sign_off": { "mode": "fixed", "default": "—— {pet_name}" },
+  "recall_required": ["item_name", "pet_name"],
+  "recall_min_count": 1
+}

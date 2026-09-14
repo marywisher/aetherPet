@@ -1,0 +1,19 @@
+{
+  "title": { "mode": "fixed", "default": "公告：{announcement_title}" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "（夜色备用包）{announcement_body}",
+        "（夜色备用包）公告飘到了我的窗台上：{announcement_body}"
+      ],
+      "poetic": [
+        "（夜色备用包）风把这张公告吹到你窗台上：{announcement_body}"
+      ]
+    },
+    "poetic_ratio": 0.05
+  },
+  "sign_off": { "mode": "fixed", "default": "—— 系统" },
+  "recall_required": [],
+  "recall_min_count": 0
+}

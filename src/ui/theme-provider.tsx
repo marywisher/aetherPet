@@ -23,6 +23,8 @@ interface ThemeContextValue {
     memoryRef: string;
     paper: string;
     ink: string;
+    muted?: string;
+    border?: string;
   } | null;
   webPath: string | null;
   availablePacks: { name: string; displayName: string }[];
@@ -70,6 +72,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           root.style.setProperty("--pack-memory-ref", palette.memory_ref);
           root.style.setProperty("--pack-paper", palette.paper);
           root.style.setProperty("--pack-ink", palette.ink);
+          // 可选字段：有值才注入，无则沿用 app 全局兜底
+          if (palette.muted) root.style.setProperty("--pack-muted", palette.muted);
+          if (palette.border) root.style.setProperty("--pack-border", palette.border);
 
           // 通过 link 标签注入 theme.css（Next.js 会自动缓存）
           const linkId = `${APP_BRAND_KEY_CLIENT}-pack-css`;
@@ -91,6 +96,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
               memoryRef: palette.memory_ref,
               paper: palette.paper,
               ink: palette.ink,
+              muted: palette.muted,
+              border: palette.border,
             },
             webPath: current.webPath,
             availablePacks: data.available ?? [],

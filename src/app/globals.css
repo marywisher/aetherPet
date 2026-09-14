@@ -1,15 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6efe4;
-  --foreground: #3d2f23;
-  --primary: #e8a87c;
-  --accent: #85c485;
-  --memory-ref: #d4b483;
-  --paper: #f6efe4;
-  --ink: #3d2f23;
-  --muted: #6b5d4f;
-  --border: #d4c8b3;
+  /* 基建变量跟随素材包（ThemeProvider 注入 --pack-*，切包后全站联动）；未注入时回退默认暖调 */
+  --background: var(--pack-paper, #f6efe4);
+  --foreground: var(--pack-ink, #3d2f23);
+  --primary: var(--pack-primary, #e8a87c);
+  --accent: var(--pack-accent, #85c485);
+  --memory-ref: var(--pack-memory-ref, #d4b483);
+  --paper: var(--pack-paper, #f6efe4);
+  --ink: var(--pack-ink, #3d2f23);
+  /* 风格类变量：跟随 pack 可选字段（muted/border）；未注入时用默认 */
+  --muted: var(--pack-muted, #6b5d4f);
+  --border: var(--pack-border, #d4c8b3);
 }
 
 @theme inline {

@@ -1,0 +1,27 @@
+{
+  "title": { "mode": "fixed", "default": "{pet_name}" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "路上捡到 {item}，带回来给你看",
+        "今天的风把 {item} 吹到我脚边，我叼回来了",
+        "{item} 有点重，我用了三只爪子才搬回来",
+        "{pet_name} 今天心情好，路上捡到 {item}",
+        "你看这个 {item}，比昨天的还好看",
+        "{item} 上还有点湿，刚捡的",
+        "我把 {item} 放在你常坐的椅子上",
+        "捡到 {item} 的时候太阳正好，我心情也好"
+      ],
+      "poetic": [
+        "我用 {item} 给你换一封晚来的信",
+        "它带着 {recall_line} 的月光落在我脚边",
+        "{item} 是我今天收到最轻的礼物"
+      ]
+    },
+    "poetic_ratio": 0.1
+  },
+  "sign_off": { "mode": "fixed", "default": "—— {pet_name}" },
+  "recall_required": ["item_name", "pet_name"],
+  "recall_min_count": 1
+}

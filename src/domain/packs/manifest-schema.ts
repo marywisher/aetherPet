@@ -35,6 +35,8 @@ export const PackManifestSchema: z.ZodType<PackManifest> = z
         memory_ref: z.string(),
         paper: z.string(),
         ink: z.string(),
+        muted: z.string().optional(),
+        border: z.string().optional(),
       }),
     }),
     assets: z.record(z.string(), z.string()).default({}),

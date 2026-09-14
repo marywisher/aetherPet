@@ -281,6 +281,9 @@ export interface PackManifest {
       memory_ref: string;
       paper: string;
       ink: string;
+      /** 可选（pack_schema 1.1+）：次级文字色 / 边框色；缺省由 app 全局兜底 */
+      muted?: string;
+      border?: string;
     };
   };
   assets: Record<string, string>;

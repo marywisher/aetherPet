@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="600" height="800">
+  <defs>
+    <pattern id="stars" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="0.7" fill="#e3e8f2" opacity="0.18"/>
+    </pattern>
+  </defs>
+  <rect width="600" height="800" fill="#1b2230"/>
+  <rect width="600" height="800" fill="url(#stars)"/>
+  <line x1="60" y1="120" x2="540" y2="120" stroke="#d9b36a" stroke-width="1" opacity="0.35"/>
+  <line x1="60" y1="140" x2="540" y2="140" stroke="#d9b36a" stroke-width="1" opacity="0.35"/>
+</svg>

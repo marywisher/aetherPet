@@ -1,0 +1,27 @@
+{
+  "title": { "mode": "fixed", "default": "{pet_name}" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "坐在 {place} 看了 {duration_minutes} 分钟水，风有点凉",
+        "水里的石子被浪洗得很圆，我盯着看了好久",
+        "{duration_minutes} 分钟里，{place} 的光从清早变成橘色",
+        "鱼游得太慢，我追不上，就坐下陪着",
+        "水面漂着一片枯叶，跟着水流走，我数着它数到睡着",
+        "坐在 {place} 的时候听见远处有人在收渔网",
+        "{pet_name} 今天有点犯困，在 {place} 看了会儿水就趴下了",
+        "水底的影子摇来摇去，好像有人在水底散步"
+      ],
+      "poetic": [
+        "我把耳朵贴在 {place} 上，听见浪把 {duration_minutes} 分钟拆成碎星",
+        "水把天揉碎了，又一片片还回来；我坐着，让它做完",
+        "{place} 的波纹里，藏着 {recall_line}"
+      ]
+    },
+    "poetic_ratio": 0.1
+  },
+  "sign_off": { "mode": "fixed", "default": "—— {pet_name}" },
+  "recall_required": ["place", "time_anchor"],
+  "recall_min_count": 1
+}

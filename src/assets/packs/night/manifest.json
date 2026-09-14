@@ -1,6 +1,6 @@
 {
-  "name": "default",
-  "display_name": "官方默认（手绘暖调）",
+  "name": "night",
+  "display_name": "夜色低语（开发者备用包）",
   "version": "1.0.0",
   "pack_schema_version": "1.0.0",
   "min_engine_version": "1.0.0",
@@ -9,13 +9,13 @@
   "theme": {
     "css": "theme.css",
     "palette": {
-      "primary": "#e8a87c",
-      "accent": "#85c485",
-      "memory_ref": "#d4b483",
-      "paper": "#f6efe4",
-      "ink": "#3d2f23",
-      "muted": "#6b5d4f",
-      "border": "#d4c8b3"
+      "primary": "#8ea8d8",
+      "accent": "#d9b36a",
+      "memory_ref": "#5f6f8f",
+      "paper": "#1b2230",
+      "ink": "#e3e8f2",
+      "muted": "#9aa7bd",
+      "border": "#333d52"
     }
   },
   "assets": {

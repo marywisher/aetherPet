@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1b2230"/>
+      <stop offset="55%" stop-color="#232c3f"/>
+      <stop offset="100%" stop-color="#2c3a55"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="400" fill="url(#sky)"/>
+  <circle cx="620" cy="90" r="34" fill="#e8e2c8" opacity="0.85"/>
+  <circle cx="632" cy="82" r="30" fill="#232c3f" opacity="0.9"/>
+  <circle cx="180" cy="70" r="2.5" fill="#d6e0f0" opacity="0.8"/>
+  <circle cx="300" cy="120" r="1.8" fill="#d6e0f0" opacity="0.7"/>
+  <circle cx="520" cy="50" r="2" fill="#d6e0f0" opacity="0.8"/>
+  <circle cx="700" cy="170" r="1.6" fill="#d6e0f0" opacity="0.6"/>
+  <path d="M0,300 Q200,250 400,285 T800,275 L800,400 L0,400 Z" fill="#d9b36a" opacity="0.16"/>
+  <path d="M0,340 Q200,310 400,335 T800,325 L800,400 L0,400 Z" fill="#d9b36a" opacity="0.22"/>
+  <text x="40" y="50" font-family="KaiTi, serif" font-size="24" fill="#e3e8f2" opacity="0.7">AetherPet · 夜色低语</text>
+</svg>
