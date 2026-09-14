@@ -171,6 +171,9 @@ function GiftsInner() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Link href="/" className="text-xs underline" style={{ color: "var(--muted)" }}>
+            首页
+          </Link>
           <Link
             href="/timeline"
             className="text-xs underline"

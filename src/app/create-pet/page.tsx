@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 /**
  * 文件名称：create-pet/page.tsx
@@ -57,6 +58,9 @@ export default function CreatePetPage() {
     <main className="flex-1 flex items-center justify-center p-6">
       <div className="paper p-8 w-full max-w-md space-y-6">
         <header className="text-center space-y-2">
+          <Link href="/" className="block text-xs underline" style={{ color: "var(--muted)" }}>
+            ← 回到首页
+          </Link>
           <h1 className="text-2xl font-semibold" style={{ fontFamily: "KaiTi, serif" }}>
             给你的伙伴起个名字
           </h1>
