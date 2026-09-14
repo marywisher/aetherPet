@@ -259,10 +259,9 @@ function HomeInner() {
         ) : (
           <>
             {fresh.length > 0 && (
-              <div className="flex items-center gap-3 py-0.5" style={{ color: "var(--muted)" }}>
-                <span className="text-xs shrink-0">你不在的时候，ta 悄悄发生了 {fresh.length} 件事</span>
-                <span className="flex-1 h-px" style={{ background: "currentColor", opacity: 0.35 }} />
-              </div>
+              <p className="text-xs py-0.5" style={{ color: "var(--muted)" }}>
+                你不在的时候，ta 悄悄发生了 {fresh.length} 件事
+              </p>
             )}
             {fresh.map((it) => (
               <EventCard
@@ -272,6 +271,12 @@ function HomeInner() {
                 rendered={it.rendered}
               />
             ))}
+            {fresh.length > 0 && past.length > 0 && (
+              <div className="flex items-center gap-3 py-0.5" style={{ color: "var(--muted)" }}>
+                <span className="text-xs shrink-0">更早之前</span>
+                <span className="flex-1 h-px" style={{ background: "currentColor", opacity: 0.35 }} />
+              </div>
+            )}
             {past.map((it) => (
               <EventCard
                 key={it.event.id}

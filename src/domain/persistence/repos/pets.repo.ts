@@ -18,6 +18,7 @@ interface PetRow {
   created_at: number;
   updated_at: number;
   last_activity_ts: number;
+  offline_start_ts: number | null;
   user_last_active_ts: number;
   next_proactive_ts: number | null;
   daily_grant_last_date: string | null;
@@ -41,6 +42,7 @@ function rowToPet(row: PetRow): Pet {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     lastActivityTs: row.last_activity_ts,
+    offlineStartTs: row.offline_start_ts,
     userLastActiveTs: row.user_last_active_ts,
     nextProactiveTs: row.next_proactive_ts,
     dailyGrantLastDate: row.daily_grant_last_date,
@@ -303,13 +305,15 @@ export async function updateStateAndActivityInTx(
   petId: string,
   state: PetState,
   stateSince: number,
-  activityTs: number
+  activityTs: number,
+  offlineStartTs: number | null = null
 ): Promise<void> {
   await connExecute(
     conn,
     `UPDATE pets SET state = ?, state_since = ?, last_activity_ts = ?,
-      user_last_active_ts = ?, updated_at = ? WHERE id = ?`,
-    [state, stateSince, activityTs, activityTs, Date.now(), petId]
+      user_last_active_ts = ?, offline_start_ts = COALESCE(?, offline_start_ts),
+      updated_at = ? WHERE id = ?`,
+    [state, stateSince, activityTs, activityTs, offlineStartTs, Date.now(), petId]
   );
 }
 

@@ -87,9 +87,10 @@ async function updatePetInTransaction(
   petId: string,
   state: Pet["state"],
   stateSince: number,
-  toTs: number
+  toTs: number,
+  offlineStartTs: number | null
 ): Promise<void> {
-  await updateStateAndActivityInTx(conn, petId, state, stateSince, toTs);
+  await updateStateAndActivityInTx(conn, petId, state, stateSince, toTs, offlineStartTs);
 }
 
 /**
@@ -107,7 +108,7 @@ export async function executeCatchUp(
   input: ExecuteCatchUpInput
 ): Promise<ExecuteCatchUpResult> {
   const startedAt = Date.now();
-  const { pet, plan, toTs } = input;
+  const { pet, plan, toTs, fromTs } = input;
 
   const runInTransaction = async (conn: PoolConnection): Promise<ExecuteCatchUpResult> => {
     // 1) 记忆池：预取一次（R3：避免每事件 N 次查询）
@@ -174,7 +175,7 @@ export async function executeCatchUp(
     }
 
     // 5) 事务尾部：UPDATE pets（state + state_since + last_activity_ts + user_last_active_ts）
-    await updatePetInTransaction(conn, pet.id, state, stateSince, toTs);
+    await updatePetInTransaction(conn, pet.id, state, stateSince, toTs, fromTs);
 
     return {
       events: generated,

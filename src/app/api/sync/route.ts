@@ -231,9 +231,8 @@ export async function GET(req: Request): Promise<NextResponse> {
       eventCount: catchupEventCount,
       aggregated: catchupAggregated,
       offlineDays: plan.offlineDays,
-      // 本次离线窗口起点（= pet 上次活跃时间）：前端用它把时间线上
-      // ts >= offlineStartTs 的事件识别为“你不在的时候发生的”（新旧分隔）
-      offlineStartTs: fromTs,
+      // 新旧分界锚点：本次有补算 → 本次窗口起点；否则用持久化的最近一次补算起点（跨刷新稳定）
+      offlineStartTs: catchupRan ? fromTs : (freshForResponse?.offlineStartTs ?? null),
       ...(catchupSkipped ? { skipped: catchupSkipped } : {}),
     },
     backoff: {

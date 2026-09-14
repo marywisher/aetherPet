@@ -51,6 +51,8 @@ export interface Pet {
   createdAt: Timestamp;
   updatedAt: Timestamp;
   lastActivityTs: Timestamp;
+  /** 最近一次离线补算窗口起点（可选；NULL/缺失 = 从未补算/无分界）；供新旧分组锚点跨会话持久化 */
+  offlineStartTs?: Timestamp | null;
   userLastActiveTs: Timestamp;
   nextProactiveTs: Timestamp | null;
   dailyGrantLastDate: string | null; // YYYY-MM-DD
