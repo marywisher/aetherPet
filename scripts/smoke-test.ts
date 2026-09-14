@@ -5,7 +5,7 @@
  * 用法：
  *   node scripts/smoke-test.ts              # 全量（需要 MySQL 可达 + 可选本地 server）
  *   node scripts/smoke-test.ts --skip-db    # 仅跑纯领域基准（补算秒级），不连 DB
- *   node scripts/smoke-test.ts --server http://localhost:3000
+ *   node scripts/smoke-test.ts --server http://localhost:30219
  * 验收标准（docs/requirements.md §3.12 / dev-stage-plan 阶段 6）：
  *   - 首屏/健康检查 < 3s
  *   - 30 天补算 < 500ms（planner 纯函数基准）
@@ -17,20 +17,24 @@
 
 const args = process.argv.slice(2);
 const skipDb = args.includes("--skip-db");
-const serverUrl = args.includes("--server")
-  ? args[args.indexOf("--server") + 1] ?? "http://localhost:3000"
-  : "http://localhost:3000";
 
 // 加载项目根 .env（获取真实 DB 凭证）。
 // 直接 node/tsx 跑时没有 Next 的 env 加载器，不加载会退到 env.ts 默认值（DB_PASS=aetherpet），
 // 而本地 Docker MySQL 密码已写入 .env，不加载会 Access denied。
 // dotenv 语义不覆盖已存在的 process.env 值，CLI 传参优先级仍高于 .env。
+import { createRequire } from "node:module";
+const nodeRequire = createRequire(import.meta.url);
 try {
-  const { loadEnvConfig } = require("@next/env");
+  const { loadEnvConfig } = nodeRequire("@next/env");
   loadEnvConfig(process.cwd(), false);
 } catch (err) {
   console.warn(`  ⚠️  .env 加载失败，继续用现有 process.env：${err instanceof Error ? err.message : err}`);
 }
+
+// 默认服务地址跟随 .env 的 PORT（运行时端口统一由 .env 管理；--server 仍可覆盖）
+const serverUrl = args.includes("--server")
+  ? args[args.indexOf("--server") + 1] ?? `http://localhost:${process.env.PORT ?? 3000}`
+  : `http://localhost:${process.env.PORT ?? 3000}`;
 
 const results: Array<{ name: string; ok: boolean; ms: number; note?: string }> = [];
 function report(name: string, ok: boolean, ms: number, note?: string) {

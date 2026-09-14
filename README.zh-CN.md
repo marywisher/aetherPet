@@ -55,7 +55,7 @@ cp .env.example .env.local   # 配置 DB_*、SMTP_*、HUB_* 等
 
 # 4. 启动开发服务
 npm run dev
-# 打开 http://localhost:3000
+# 打开 http://localhost:30219
 ```
 
 体验路径：用邮箱注册 → 收到验证码（邮件正文带**中心身份标识**：中心名、隐私页、管理员邮箱）→ 给宠物起名 → 进入首页，宠物在家。

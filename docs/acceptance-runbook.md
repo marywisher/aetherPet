@@ -25,7 +25,7 @@
 docker ps --filter name=aetherpet        # 应显示 Up (healthy)，端口 127.0.0.1:3306
 
 # 2) 应用存活且 migration 成功
-curl.exe -s http://localhost:3000/api/healthz
+curl.exe -s http://localhost:30219/api/healthz
 #   预期：{"ok":true,...} 中 db.ok=true，startup.failed=false
 
 # （可选）开发日志去噪：Next.js 16 dev 会刷一批 Edge Runtime 分析警告（非报错，不影响功能）。
@@ -36,10 +36,10 @@ curl.exe -s http://localhost:3000/api/healthz
 # 3) 自动化证据全跑一遍（单测 + 真库集成 + 性能冒烟）
 npm test                                   # 单测：519 passed / 8 skipped
 $env:INTEGRATION_DB="1"; npm run test:integration   # 集成：8 passed（真实 MySQL 8.4）
-npm run smoke -- --server http://localhost:3000     # 性能冒烟：3/3 通过
+npm run smoke -- --server http://localhost:30219     # 性能冒烟：3/3 通过
 ```
 
-> 应用开发服务器：`npm run dev`（已在 http://localhost:3000 运行）
+> 应用开发服务器：`npm run dev`（已在 http://localhost:30219 运行）
 > 登录验证码：本地 `SMTP_DRY_RUN=true` **不真发邮件**，验证码打印在 `logs/dev-server.log`，每次注册后去查：
 > ```powershell
 > Get-Content logs/dev-server.log -Tail 50 | Select-String -Pattern "code|验证码|verification"
@@ -51,7 +51,7 @@ npm run smoke -- --server http://localhost:3000     # 性能冒烟：3/3 通过
 ## 1. 注册登录（含安全边界）
 
 **操作**
-1. 打开 `http://localhost:3000/login` → 点「注册」→ 输入邮箱（用没用过的，如 `eptest1@example.com`），点发送验证码
+1. 打开 `http://localhost:30219/login` → 点「注册」→ 输入邮箱（用没用过的，如 `eptest1@example.com`），点发送验证码
 2. 从 `logs/dev-server.log` 找到 6 位验证码 → 输入 → 注册成功进入「创建宠物」页
 3. 输入宠物名（如「棉花」）→ 创建成功 → 回到首页看到宠物
 4. 退出登录 → 用同一邮箱 + 新验证码重新登录
@@ -161,7 +161,7 @@ npm run smoke -- --server http://localhost:3000     # 性能冒烟：3/3 通过
 
 **操作**
 1. `npm run build` → 检查 `.next/standalone` 产物存在
-2. `npm run smoke -- --server http://localhost:3000` → 3 项全过（见 §0）
+2. `npm run smoke -- --server http://localhost:30219` → 3 项全过（见 §0）
 3. 浏览器实测首屏加载时间（DevTools Network，常规网络 <3s）
 
 **预期**

@@ -114,7 +114,7 @@
 
 #### 阶段演示
 
-1. 打开 http://localhost:3000，看到登录页。
+1. 打开 http://localhost:30219，看到登录页。
 2. 输入邮箱 → 点"发送验证码" → 邮箱收到（或 console.log 验证码，开发模式）→ 邮件正文带中心身份标识（当前 hub_id + 中心名 + 隐私承诺页）。
 3. 输入验证码 → 跳转到"给你的伙伴起个名字"页 → 起名 "小圆" → 跳转首页。
 4. 首页显示 "小圆 · 在家"（状态占位）+ 使用默认素材包的背景。
@@ -462,7 +462,7 @@
 
 #### 阶段演示
 
-1. 打开 http://localhost:3000 → 导出 pet 全部数据 → 得到 JSON 文件（含 schema_version=1.0.0、checksum、exported_from="local"）。
+1. 打开 http://localhost:30219 → 导出 pet 全部数据 → 得到 JSON 文件（含 schema_version=1.0.0、checksum、exported_from="local"）。
 2. 清空测试账号 → 导入刚才的 JSON → 数据逐字段比对一致 → 时间线、记忆、物品栏完全恢复。
 3. 手动篡改 JSON 的 checksum → 导入 → 提示"校验和失败，数据可能已损坏"。
 4. 手动把 schema_version 改为 "2.0.0" → 导入 → 提示"版本不匹配，请使用兼容的导出文件"。

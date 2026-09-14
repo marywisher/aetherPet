@@ -61,7 +61,7 @@
 
 ## 4. 环境与现场状态(重要)
 
-- **dev server 运行中**(localhost:3000);`启动服务.bat` / `停止服务.bat` 可重启。
+- **dev server 运行中**(localhost:30219);`启动服务.bat` / `停止服务.bat` 可重启。
 - **`.env` 本次新增 4 个品牌键** → 若上一进程未重启,`APP_NAME` 等可能未生效;**新会话先重启 dev 再验证品牌/改名**。
 - `.env` 已配 `HUB_ADMIN_TOKEN`(值在 .env,勿写文档;发布公告用 `X-Admin-Token` 请求头)。
 - 数据库：仅 1 只 pet「好运来」,处于多次验收后的测试数据状态(事件约十余条:初始 3 + 多次补算 + 馈赠 + 回信 + 公告播报)。
@@ -93,7 +93,7 @@ npm run build && npm run start   # 生产验证
 npx tsc --noEmit           # 类型
 npx eslint src             # lint
 npx vitest run             # 单测（531 passed / 8 skipped 目前）
-curl http://localhost:3000/api/healthz   # 存活
+curl http://localhost:30219/api/healthz   # 存活
 # 造数（补算/退避）: UPDATE pets SET last_activity_ts=?, user_last_active_ts=? WHERE name='好运来'
 # 发布公告: POST /api/announcements/admin + Header X-Admin-Token: <见 .env>
 ```

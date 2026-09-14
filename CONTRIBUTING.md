@@ -20,7 +20,7 @@ Welcome! AetherPet is built by its community — code, copy, asset packs, and do
 npm install
 npm run db:up          # MySQL 8 via Docker (同生产环境)
 cp .env.example .env.local  # 填 DB_* / SMTP_* / HUB_* 配置
-npm run dev            # http://localhost:3000
+npm run dev            # http://localhost:30219
 ```
 
 Core conventions (硬规则，PR 必须满足)：

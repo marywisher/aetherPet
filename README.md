@@ -55,7 +55,7 @@ cp .env.example .env.local   # set DB_*, SMTP_*, HUB_* values
 
 # 4. run dev server
 npm run dev
-# open http://localhost:3000
+# open http://localhost:30219
 ```
 
 Walkthrough: sign up with your email → you receive a magic code (email body carries the **hub identity**: hub name, privacy page, admin contact) → name your pet → land on the home scene, pet sitting at home.
