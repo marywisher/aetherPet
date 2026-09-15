@@ -35,6 +35,8 @@ function getTransporter() {
     auth: cfg.user ? { user: cfg.user, pass: cfg.pass } : undefined,
     pool: true,
     maxConnections: 2,
+    connectionTimeout: 10_000,
+    socketTimeout: 15_000,
   });
   return _transporter;
 }
