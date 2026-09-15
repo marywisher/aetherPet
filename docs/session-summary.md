@@ -187,3 +187,43 @@
 4. 导入语义=恢复(全量覆盖,单事务)已实测逐字段一致;多出的新事件是导入后 sync 自动补算/馈赠,非残留
 
 **遗留**：git 未提交(工作区 30+ 改动)；验收 8/11/7 错误分支未做；分割线待自然场景；详见交接文档。
+
+---
+
+## 追加：发布前增量（pre-launch，2026-09-15）
+
+> 基于 `docs/session-handoff-pre-launch.md` 启动，dev-team-workflow 工作流 B。
+> 需求讨论（阶段 1）→ 产品评审（阶段 2）→ 架构确认（阶段 3）→ 分增量开发（阶段 4）→ 收尾（阶段 5）。
+
+### 已完成增量
+
+| 增量 | 提交 | 内容 |
+|---|---|---|
+| 1 | `e3e4abe feat(prelaunch-1)` | 事件引擎 first_meeting（第 12 类）+ 初始事件倒推 + 契约 1.1.0 + 创建事务 + P0-1 馈赠跳过 |
+| 2 | `07c4051 feat(prelaunch-2)` | 小刺猬素材 8 张 + 首页背景/状态图接线 + desk hint + 收尾句双落点 + 信纸背景 |
+| 3 | `256f7a7 feat(prelaunch-3)` | README 借势叙事 + docs/why-self-hosted.md + pitfalls 复盘 |
+| 机动 | `13e4e47 fix(mobile)` | 首页 nav wrap + pet 图移动端缩小 + first-meeting-note 真实插图 |
+| 机动 | `1b44f1b fix(auth)` | mail-sender SMTP 连接/套接字超时（防卡死） |
+
+### 关键决策
+
+1. 默认 pet = 小刺猬（自然系，避开猫狗赛道，不与青蛙 IP 形象冲突）
+2. 叙事修正：数据归个人 / 可迁移 / 不做反 AI（handoff 的「不喂第三方」叙事被否决）
+3. P0-1：创建当日跳过每日馈赠，首馈赠 T+1；判据必须用 `pet.createdAt`（用 `dailyGrantLastDate` 会永久停摆）
+4. first_meeting：不进 RANDOM_TYPES/补算池/dev 白名单（4 道守卫单测锁死）
+5. 初始事件：1–2 条、限 at_home 类型池、ts 倒推 6~48h（“初见前它已在此”）
+6. 契约 1.1.0：minor 兼容；texts.first_meeting/guidance 可选 + loader 字段级回退物化（旧包零改动可用）
+7. 收尾句：双落点（首页页脚 pagehide 兑底 + /settings logout→/login?farewell=1），localStorage 按 petId 标记
+8. 图片键不重复：仅 default 包放 PNG，morning/night 走字段级物化回退
+
+### 验证结果
+
+- `npx tsc --noEmit` → 0 errors
+- `npx vitest run` → 543 passed / 8 skipped（与基线一致，新增 ~35 条单测）
+- SMTP 通道确认可用（真实收到退信，example.com 无 MX 属预期）
+
+### 遗留（用户侧操作）
+
+- GitHub 公开 + 官方托管部署（域名 / 服务器）
+- 发布前真 MySQL 全量回归 11 项（CI 可自动补）
+- 发布后 30–60 天止损检查（star<200 且自托管实例<50 → 维护态）
