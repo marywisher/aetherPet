@@ -14,7 +14,7 @@ import type { FsmAction } from "../fsm/pet-fsm";
 /** 引擎版本（与 pack_schema_version 独立，见架构 §5.5） */
 export const ENGINE_VERSION = "1.0.0";
 export const SCHEMA_VERSION = "1.0.0";
-export const PACK_SCHEMA_VERSION = "1.0.0";
+export const PACK_SCHEMA_VERSION = "1.1.0";
 
 /** 可注入的可复现 RNG（单测用 seeded RNG；默认 Math.random） */
 export type Rng = () => number;

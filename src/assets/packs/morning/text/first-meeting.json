@@ -1,0 +1,17 @@
+{
+  "title": { "mode": "fixed", "default": "一张字条" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "清晨的光落在字条上，小刺猬已经醒了很久。它把想说的话写在一张纸上。",
+        "晨光里，桌上摊着一封信，是你不在的时候留下的。"
+      ],
+      "poetic": []
+    },
+    "poetic_ratio": 0.0
+  },
+  "sign_off": { "mode": "fixed", "default": "—— {pet_name}" },
+  "recall_required": [],
+  "recall_min_count": 0
+}

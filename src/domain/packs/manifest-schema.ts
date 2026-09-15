@@ -53,6 +53,9 @@ export const PackManifestSchema: z.ZodType<PackManifest> = z
         system_announce: z.string().min(1),
         daily_grant: z.string().min(1),
         offer_received: z.string().min(1),
+        // pack_schema 1.1.0（pre-launch）：新增可选键，缺则渲染时回退 default 包
+        first_meeting: z.string().min(1).optional(),
+        guidance: z.string().min(1).optional(),
       })
       .catchall(z.string()),
     fallback: z.string().nullable().default(null),

@@ -1,0 +1,18 @@
+{
+  "title": { "mode": "fixed", "default": "一张字条" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "你好，我是住在这里的小刺猬。桌上的东西可以送给我吗？我会好好收着的。",
+        "发现窗台上多了一张字条，歪歪扭扭写着你的名字。大概是留给你的吧。",
+        "小刺猬从桌上抬起头，面前摊着一张纸——看起来是给你的第一封信。"
+      ],
+      "poetic": []
+    },
+    "poetic_ratio": 0.0
+  },
+  "sign_off": { "mode": "fixed", "default": "—— {pet_name}" },
+  "recall_required": [],
+  "recall_min_count": 0
+}

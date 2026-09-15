@@ -58,6 +58,10 @@ export interface EngineOptions {
   forceType?: string;
   /** 手动触发某生成器时传入的额外参数（如 reply_letter 的 giftEventId） */
   generatorInput?: Record<string, unknown>;
+  /** 初始事件限定类型池（pre-launch：非空时替代 pickRandomTypesByState 结果） */
+  typePool?: EventTypeValue[];
+  /** 逐条事件 ts 列表（长度 >= count 时第 i 条用此值，缺省沿用 opts.ts） */
+  tsPerEvent?: number[];
 }
 
 /**
@@ -91,6 +95,9 @@ export function generateNextEvent(
   let type: EventTypeValue;
   if (opts.forceType) {
     type = opts.forceType as EventTypeValue;
+  } else if (opts.typePool && opts.typePool.length > 0) {
+    // pre-launch：初始事件限定类型池（不经过 FSM 状态判断）
+    type = (pickOne(rng, opts.typePool) ?? "self_talk") as EventTypeValue;
   } else {
     const candidates = pickRandomTypesByState(pet.state);
     type = (pickOne(rng, candidates) ?? "self_talk") as EventTypeValue;
@@ -105,6 +112,9 @@ export function generateNextEvent(
   const mergedCtx = opts.generatorInput
     ? ({ ...ctx, ...opts.generatorInput } as EventContext & Record<string, unknown>)
     : ctx;
+
+  // pre-launch：逐条 ts 覆盖（tsPerEvent[i]）由 generateBatchEvents 循环传入，
+  // 这里保持 ctx.ts 原样；forceType 单条生成时调用方直接传 ts。
 
   const { event, fsmAction } = (generator as (c: unknown) => GeneratedEvent)(mergedCtx);
 
@@ -137,7 +147,12 @@ export function generateBatchEvents(
   for (let i = 0; i < count; i++) {
     // 更新 pet 快照供下一轮使用（保持 state 变化生效）
     const petNow = { ...pet, state, stateSince };
-    const out = generateNextEvent(petNow, memories, opts);
+    // pre-launch：若提供 tsPerEvent 且长度大于 i，覆盖当前 opts 中的 ts
+    const tsOverride =
+      opts.tsPerEvent && opts.tsPerEvent.length > i
+        ? { ...opts, ts: opts.tsPerEvent[i] }
+        : opts;
+    const out = generateNextEvent(petNow, memories, tsOverride);
     events.push(out.event);
     state = out.nextState;
     stateSince = out.nextStateSince;

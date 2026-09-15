@@ -54,7 +54,8 @@ export interface DailyGrantInput {
 export type DailyGrantSkipReason =
   | "already_granted_today"
   | "no_pet"
-  | "empty_pool";
+  | "empty_pool"
+  | "created_today";
 
 export interface DailyGrantResult {
   granted: boolean;
@@ -111,6 +112,13 @@ export async function grantDailyItem(
 
   if (!pet || !pet.id) {
     return { granted: false, skipReason: "no_pet", todayStr };
+  }
+
+  // P0-1（pre-launch）：创建当日不发放每日馈赠，首馈赠顺延至 T+1。
+  // 判据必须用 pet.createdAt（不用 dailyGrantLastDate——跳过当天不写该字段，
+  // T+1 时仍为 null，若以此判断会把后续每天都误判为“创建当日”导致馈赠永久停摆）。
+  if (toLocalDateStr(pet.createdAt) === todayStr) {
+    return { granted: false, skipReason: "created_today", todayStr };
   }
 
   if (hasGrantedToday(pet, todayStr)) {

@@ -98,6 +98,48 @@ export async function insert(data: Omit<Pet, "id" | "createdAt" | "updatedAt" | 
   return created!;
 }
 
+/**
+ * 事务内插入 pet（供 pre-launch 创建事务使用）
+ */
+export async function insertInTx(
+  conn: import("mysql2/promise").PoolConnection,
+  data: Omit<Pet, "id" | "createdAt" | "updatedAt" | "stateSince" | "lastActivityTs" | "userLastActiveTs" | "replyPending" | "activePackName"> & { id: string }
+): Promise<void> {
+  const env = getEnv();
+  const defaultPackName = env.DEFAULT_PACK;
+  const now = Date.now();
+  await connExecute(
+    conn,
+    `INSERT INTO pets
+      (id, user_id, name, state, state_since, created_at, updated_at,
+       last_activity_ts, user_last_active_ts, next_proactive_ts,
+       daily_grant_last_date, offer_last_date,
+       reply_pending, reply_due_at, last_reply_at,
+       active_pack_name, wallet_ref, schema_version, hub_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      data.id,
+      data.userId,
+      data.name,
+      data.state,
+      now,
+      now,
+      now,
+      now,
+      now,
+      data.nextProactiveTs ?? null,
+      data.dailyGrantLastDate ?? null,
+      data.offerLastDate ?? null,
+      0,
+      data.replyDueAt ?? null,
+      data.lastReplyAt ?? null,
+      defaultPackName,
+      data.walletRef ?? null,
+      data.schemaVersion,
+      data.hubId,
+    ]
+  );
+}
 export async function findById(id: string): Promise<Pet | null> {
   const pool = getPool();
   const row = await queryOne<PetRow>(pool, "SELECT * FROM pets WHERE id = ?", [id]);

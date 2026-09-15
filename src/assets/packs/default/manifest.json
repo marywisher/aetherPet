@@ -1,8 +1,8 @@
 {
   "name": "default",
   "display_name": "官方默认（手绘暖调）",
-  "version": "1.0.0",
-  "pack_schema_version": "1.0.0",
+  "version": "1.1.0",
+  "pack_schema_version": "1.1.0",
   "min_engine_version": "1.0.0",
   "author": "AetherPet core team",
   "license": "MIT",
@@ -20,7 +20,8 @@
   },
   "assets": {
     "home_bg": "images/home-bg.svg",
-    "letter_bg": "images/letter-bg.svg"
+    "letter_bg": "images/letter-bg.svg",
+    "first_meeting_note": "images/first-meeting-note.png"
   },
   "texts": {
     "outing": "text/outing.json",
@@ -33,7 +34,9 @@
     "aggregate_summary": "text/aggregate-summary.json",
     "system_announce": "text/system-announce.json",
     "daily_grant": "text/daily-grant.json",
-    "offer_received": "text/offer-received.json"
+    "offer_received": "text/offer-received.json",
+    "first_meeting": "text/first-meeting.json",
+    "guidance": "text/guidance.json"
   },
   "fallback": null
 }

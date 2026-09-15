@@ -167,6 +167,26 @@ export async function loadPacks(packsDir?: string): Promise<LoadedPack[]> {
     });
   }
 
+  // pre-launch（pack_schema 1.1.0 字段级回退物化）：
+  // 1.1.0 新增的可选键（texts.first_meeting / texts.guidance / images.first_meeting_note）
+  // 若非 default 包缺失，从 default 包同名键拷贝，保证旧包（1.0.x）零改动可用。
+  // 边界：仅物化这几个新增可选键；1.0.0 的 11 个必填键仍走整包级回退（fallback.ts），语义不扩散。
+  const defaultPack = result.find((p) => p.name === "default") ?? null;
+  if (defaultPack) {
+    const FIELD_KEYS = ["first_meeting", "guidance"] as const;
+    for (const pack of result) {
+      if (pack.name === "default") continue;
+      for (const key of FIELD_KEYS) {
+        if (!pack.texts[key] && defaultPack.texts[key]) {
+          pack.texts[key] = defaultPack.texts[key];
+        }
+      }
+      if (!pack.images["first_meeting_note"] && defaultPack.images["first_meeting_note"]) {
+        pack.images["first_meeting_note"] = defaultPack.images["first_meeting_note"];
+      }
+    }
+  }
+
   _packsCache = result;
   return result;
 }

@@ -180,11 +180,12 @@ export const EventType = {
   SYSTEM_ANNOUNCE: "system_announce",
   DAILY_GRANT: "daily_grant",
   OFFER_RECEIVED: "offer_received",
+  FIRST_MEETING: "first_meeting",
 } as const;
 
 export type EventTypeValue = typeof EventType[keyof typeof EventType];
 
-export type EventSource = "engine" | "catchup" | "gift" | "system" | "admin";
+export type EventSource = "engine" | "catchup" | "gift" | "system" | "admin" | "creation";
 
 export interface MemoryRef {
   kind: "pet_name" | "item_name" | "time_anchor" | "place";

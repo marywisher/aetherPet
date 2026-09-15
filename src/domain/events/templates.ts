@@ -19,6 +19,7 @@ import { generateAggregateSummary } from "./generators/aggregate-summary";
 import { generateSystemAnnounce } from "./generators/announcement";
 import { generateDailyGrant } from "./generators/daily-grant";
 import { generateOfferReceived } from "./generators/offer-received";
+import { generateFirstMeeting } from "./generators/first-meeting";
 
 export const GENERATORS: GeneratorRegistry = {
   outing: generateOuting,
@@ -32,6 +33,8 @@ export const GENERATORS: GeneratorRegistry = {
   system_announce: generateSystemAnnounce,
   daily_grant: generateDailyGrant,
   offer_received: generateOfferReceived,
+  // pre-launch：初见事件——仅创建流程显式触发，不进 RANDOM_TYPES
+  first_meeting: generateFirstMeeting,
 };
 
 /** 引擎可随机触发的类型（不含 gift/system/catchup 类） */

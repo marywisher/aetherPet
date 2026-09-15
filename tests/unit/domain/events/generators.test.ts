@@ -130,7 +130,7 @@ describe("9 个随机事件生成器（契约验证）", () => {
       expect(event.memoryRefs).toBeDefined();
       expect(event.source).toMatch(/^(engine|gift)$/);
       expect(event.engineVersion).toBe("1.0.0");
-      expect(event.packSchemaVersion).toBe("1.0.0");
+      expect(event.packSchemaVersion).toBe("1.1.0");
       expect(event.schemaVersion).toBe("1.0.0");
       expect(event.hubId).toBe("local");
       expect(event.isAggregate).toBe(false);
@@ -229,13 +229,14 @@ describe("9 个随机事件生成器（契约验证）", () => {
 });
 
 describe("生成器注册表", () => {
-  it("GENERATORS 含全部 11 个事件类型", () => {
+  it("GENERATORS 含全部 12 个事件类型（含 first_meeting）", () => {
     const types = Object.keys(GENERATORS) as EventTypeValue[];
-    expect(types.length).toBe(11);
+    expect(types.length).toBe(12);
     for (const t of [
       "outing", "watching_water", "counting_leaves", "self_talk",
       "brought_item", "reply_letter", "spontaneous_letter",
       "aggregate_summary", "system_announce", "daily_grant", "offer_received",
+      "first_meeting",
     ]) {
       expect(types).toContain(t);
     }

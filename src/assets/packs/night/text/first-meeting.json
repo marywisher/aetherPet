@@ -1,0 +1,17 @@
+{
+  "title": { "mode": "fixed", "default": "一张字条" },
+  "body": {
+    "mode": "template",
+    "variants": {
+      "daily": [
+        "月光照在字条上，小刺猬在夜深时写下这些字。它知道你会回来。",
+        "桌上放着一盏小灯和一张字条——夜里的自言自语，刚好被你撞见。"
+      ],
+      "poetic": []
+    },
+    "poetic_ratio": 0.0
+  },
+  "sign_off": { "mode": "fixed", "default": "—— {pet_name}" },
+  "recall_required": [],
+  "recall_min_count": 0
+}

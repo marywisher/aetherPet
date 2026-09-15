@@ -55,7 +55,7 @@ describe("contract-vs-schema（阶段 2 Round 2 · P1-003）", () => {
     }
   });
 
-  it("11 个事件类型 text 键齐全（契约 §5 事件契约速查表）", () => {
+  it("11 个基础事件类型 text 键齐全，新可选键不受限（pack_schema 1.1.0）", () => {
     const EXPECTED_TYPES = [
       "outing",
       "watching_water",
@@ -69,7 +69,7 @@ describe("contract-vs-schema（阶段 2 Round 2 · P1-003）", () => {
       "daily_grant",
       "offer_received",
     ];
-    expect(Object.keys(manifest.texts).length).toBe(11);
+    // 1.1.0 新增可选键（first_meeting/guidance），不精确断言长度
     for (const t of EXPECTED_TYPES) {
       expect(manifest.texts[t], `缺少 text 键: ${t}`).toBeDefined();
       expect(typeof manifest.texts[t]).toBe("string");

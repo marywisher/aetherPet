@@ -28,7 +28,7 @@ describe("loader（加载官方默认素材包）", () => {
     if (defaultPack) {
       expect(defaultPack.manifest).not.toBeNull();
       expect(defaultPack.manifest?.name).toBe("default");
-      expect(defaultPack.manifest?.pack_schema_version).toBe("1.0.0");
+      expect(defaultPack.manifest?.pack_schema_version).toBe("1.1.0");
       expect(defaultPack.themeCssContent).toMatch(/--pack-primary/);
       expect(defaultPack.images.home_bg).toBeDefined();
       expect(defaultPack.texts.outing).toBeDefined();

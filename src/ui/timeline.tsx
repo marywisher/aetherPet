@@ -67,6 +67,7 @@ export const TYPE_LABELS: Record<EventTypeValue, string> = {
   system_announce: "公告",
   daily_grant: "馈赠",
   offer_received: "送赠",
+  first_meeting: "初见",
 };
 
 export const STATE_LABELS: Record<PetState, string> = {

@@ -6,7 +6,7 @@
  */
 
 import { getPool } from "../db";
-import { execute } from "../sql";
+import { execute, connExecute } from "../sql";
 import { getEnv } from "@/config/env";
 import type { AuditEventType } from "../../types";
 
@@ -28,6 +28,30 @@ export async function insertAuditLog(entry: AuditLogInput): Promise<void> {
   const env = getEnv();
   await execute(
     pool,
+    `INSERT INTO audit_log
+      (user_id, event_type, detail, ip, user_agent, created_at, schema_version, hub_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      entry.userId ?? null,
+      entry.eventType,
+      entry.detail ? JSON.stringify(entry.detail) : null,
+      entry.ip ?? null,
+      entry.userAgent ?? null,
+      Date.now(),
+      entry.schemaVersion ?? "1.0.0",
+      entry.hubId ?? env.HUB_ID,
+    ]
+  );
+}
+
+/** 事务内写入一条审计日志（供 pre-launch 创建事务使用） */
+export async function insertAuditLogInTx(
+  conn: import("mysql2/promise").PoolConnection,
+  entry: AuditLogInput
+): Promise<void> {
+  const env = getEnv();
+  await connExecute(
+    conn,
     `INSERT INTO audit_log
       (user_id, event_type, detail, ip, user_agent, created_at, schema_version, hub_id)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,

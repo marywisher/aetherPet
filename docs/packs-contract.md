@@ -1,12 +1,12 @@
 # AetherPet 素材包契约（Pack Contract）
 
-> 版本：**v1.0.1**（阶段 2 Round 2 修复）  
-> 冻结时间：阶段 2（2024-06）  
+> 版本：**v1.1.0**（pre-launch 增量 1 — pack_schema 兼容扩展）  
+> 冻结时间：阶段 2（2024-06）；§5/§6/§8.4 同步于 2026-09-15  
 > 适用范围：AetherPet 素材包（`src/assets/packs/<name>/`）  
 > 演进规则见 §8
-> 本版本变更：§2 manifest.json 契约与实际 `manifest-schema.ts` 对齐（P1-003）；
-> §5 brought_item FSM 动作改为 `out_walking → at_home`（P1-004）；
-> §8.4 新增事件类型清单补充 UI/占位符同步项（P3-005）
+> 本版本变更：新增 `first_meeting` 事件类型（第 12 类）+ `guidance` 文案组；
+> §5 事件表加 `first_meeting` 行；§6 补字段级回退优先级；§8.4 清单补 RANDOM_TYPES 排除；
+> §10 变更历史记录
 
 ---
 
@@ -16,7 +16,7 @@
 src/assets/packs/<name>/
 ├── manifest.json         # 包元信息（必填）
 ├── theme.css             # 视觉 CSS（必填，含 --pack-* 变量）
-└── text/                 # 11 个事件类型的文本 JSON（必填，每类一个）
+└── text/                 # 12 个事件类型 + 1 个引导组文本 JSON（11 旧键必填，新键可选）
     ├── outing.json
     ├── watching-water.json
     ├── counting-leaves.json
@@ -27,7 +27,9 @@ src/assets/packs/<name>/
     ├── aggregate-summary.json
     ├── system-announce.json
     ├── daily-grant.json
-    └── offer-received.json
+    ├── offer-received.json
+    ├── first-meeting.json    # 可选（pack_schema 1.1.0）
+    └── guidance.json         # 可选（pack_schema 1.1.0）
 ```
 
 MVP 阶段不引入 `fonts/` / `icons/` / `particles/` 等目录（阶段 5 才开放）。
@@ -187,6 +189,10 @@ MVP 阶段不引入 `fonts/` / `icons/` / `particles/` 等目录（阶段 5 才�
 | `offer_received` | gift | `item_id, item_display_name, offer_event_id` | `item_name`（强制）, `pet_name`（强制）, `time_anchor`（期望） | 1 | no-op |
 | `aggregate_summary` | catchup | `span_days, items_collected, outings, travel_nights` | `pet_name`（强制） | 1 | no-op |
 | `system_announce` | system | `announcement_id, announcement_title, announcement_body` | — | 0 | no-op |
+| `first_meeting` | creation | — | — | 0 | no-op |
+
+> **注（pack_schema 1.1.0）**：`first_meeting` 的 source 为 `creation`（仅创建流程显式触发 1 次），
+> 不进 `RANDOM_TYPES`、不进补算池、不进 dev FORCE_TYPES 白名单。
 
 > 注（Round 2 修复 P2-012）：`aggregate_summary` 的 `nameForceProb=1` 与契约 `recall_min_count=1` 现已对齐（之前为 0，与实际强制注入 pet_name 行为不一致）。聚合摘要以“给 pet 的一句话总结”为目标，pet 名字必须出现在文案中才有上下文。
 
@@ -225,6 +231,20 @@ MVP 阶段不引入 `fonts/` / `icons/` / `particles/` 等目录（阶段 5 才�
 
 - 日常 vs 诗意 ≈ 9:1（每事件文本的抽样比例）
 - 全部素材包合计不少于 60 条独特文案（阶段 2 目标）
+
+### 6.5 字段级回退优先级（pack_schema 1.1.0）
+
+pack_schema 1.1.0 新增的可选键（`texts.first_meeting` / `texts.guidance` / `assets.first_meeting_note`）
+由 loader 在加载完成后统一**物化**：非 default 包缺失上述任一键时，从 default 包同名键拷贝。
+渲染消费方（renderEvent、前端 packs API）零改动。回退优先级（降序）：
+
+1. **自身键** — 本包 manifest 存在该键 → 直接加载
+2. **default 包同名键** — 本包缺键，且 default 包有 → 物化阶段拷贝
+3. **降级形态** — default 包也缺键 → `renderEvent(null)` 纯文本 / 前端不显示插图
+
+> 1.0.x 的 11 个必填键不走字段级回退——这些键缺失时整包回退到 default（`fallback.ts` 整包级语义），
+> 不产生混合观感。
+> 1.1.0 新增键维持「字段级回退不扩散」的原则：不会影响既有渲染逻辑。
 
 ---
 
@@ -272,17 +292,18 @@ MVP 阶段不引入 `fonts/` / `icons/` / `particles/` 等目录（阶段 5 才�
 
 ### 8.4 新增事件类型清单
 
-新增事件类型必须同步以下 8 项（阶段 2 Round 2 补充了 3 项 UI/文档）：
+新增事件类型必须同步以下 10 项（阶段 2 Round 2 补充 3 项 UI/文档；pre-launch 增量 1 补充 RANDOM_TYPES/补算池排除）：
 
 1. `src/domain/events/generators/<name>.ts` — 生成器实现
 2. `src/domain/events/templates.ts` — 注册到 GENERATORS（及 RANDOM_TYPES，如适用）
 3. `src/assets/packs/default/text/<name>.json` — 素材包文案（8 daily + 3 poetic 变体）
 4. `docs/packs-contract.md §5` — 契约表追加一行
-5. `src/domain/packs/manifest-schema.ts` — `texts` 对象中新增必填字段
+5. `src/domain/packs/manifest-schema.ts` — `texts` 对象中新增字段（1.1.0 起可选键用 `.optional()`）
 6. `docs/architecture.md §7` — 事件类型表追加
 7. **`src/ui/event-card.tsx`** — `TYPE_LABELS` 字典新增中文名标签（否则 UI 会直接显示 event type 字串）
 8. **`src/app/page.tsx`** — 若需开发模式手动触发按钮，追加到 `FORCE_TYPES`；否则省略
 9. **`docs/packs-contract.md §4`** — 若新增占位符，占位符表同步追加
+10. **`RANDOM_TYPES` / 补算池** — 若不希望该类型被随机触发，必须显式排除（`first_meeting` 先例：不进 `RANDOM_TYPES`、不进 planner `CANDIDATE_TYPES`、不进 dev `FORCE_TYPES`）
 
 ### 8.5 已知限制（阶段 2）
 
@@ -303,6 +324,13 @@ MVP 阶段不引入 `fonts/` / `icons/` / `particles/` 等目录（阶段 5 才�
 
 ## 10. 变更历史
 
+- **v1.1.0（pre-launch 增量 1 — 2026-09-15）**：
+  - 新增事件类型 `first_meeting`（第 12 类），source = `creation`，FSM no-op；不进 `RANDOM_TYPES` / 补算池 / dev `FORCE_TYPES`（§5 表 / §8.4 清单同步）
+  - 新增可选文案组 `guidance`（`desk_hint` + `first_session_farewell`）
+  - §6 新增 6.5 字段级回退优先级（loader 物化，不扩散）
+  - §8.4 新增第 10 项 RANDOM_TYPES/补算池显式排除
+  - §1 目录布局更新（新增可选文件）
+  - 兼容：1.0.x 旧包零改动继续可用（新键可选 + 物化回退 default）
 - **v1.0.1（阶段 2 Round 2）**：
   - 修复 §2 manifest.json 契约与实际 `manifest-schema.ts` 不对齐（P1-003）
   - 修正 §5 brought_item 的 FSM 动作为 `out_walking → at_home`（P1-004）

@@ -53,7 +53,7 @@ function makePet(overrides: Partial<Pet> = {}): Pet {
     name: "小圆",
     state: "at_home",
     stateSince: TS_BASE,
-    createdAt: TS_BASE - 1000,
+    createdAt: TS_BASE - 1000 - 48 * 3600 * 1000, // P0-1：创建当日跳过馈赠，固件创建时间至少早 1 天
     updatedAt: TS_BASE,
     lastActivityTs: TS_BASE,
     userLastActiveTs: TS_BASE,
