@@ -2,7 +2,10 @@
 
 **An open-source, pluggable, low-frequency AI companion pet.** 🍃🐾
 
-AetherPet is a spiritual successor to *Travel Frog (旅かえる)*: your pet lives quietly in its own little world — it wanders, watches the water, counts leaves, and every once in a while writes *you* a letter. No social networks, no leaderboards, no FOMO. Just a small, warm presence that remembers you.
+> When *Travel Frog* shut its doors, its memories had nowhere to go.
+> With AetherPet, the data was in your hands from day one — a service shutdown, a migration, a home server: it follows you wherever you go.
+
+AetherPet is a spiritual successor to *Travel Frog (旅かえる)*: your pet lives quietly in its own little world — it wanders, watches the water, counts leaves, and every once in a while writes *you* a letter. No social networks, no leaderboards, no FOMO. Just a small, warm presence that remembers you — stored in data that is **yours**.
 
 > 中文版说明见 [README.zh-CN.md](./README.zh-CN.md)
 
@@ -10,13 +13,14 @@ AetherPet is a spiritual successor to *Travel Frog (旅かえる)*: your pet liv
 
 ## Why it exists
 
-The beloved game *Travel Frog* will officially cease operations on December 8, 2026. However, its gameplay and spirit should not be abandoned just like that. Therefore, we plan to create our own version.
+*Travel Frog* officially ceased operations on December 8, 2026. The service is gone, but the little memories it held — a puddle watched at dusk, a leaf counted on a rainy afternoon — deserve somewhere to live. So we built our own version.
 
-AetherPet is designed as **an open ecosystem**, not a closed app:
+AetherPet is designed as **an open ecosystem with your data at the center**, not a closed app:
 
-- **核心基座 (core kernel) + pluggable packs** — the event engine and the "presentation layer" (visual + copy) are fully decoupled. Anyone can reskin the pet by providing a *theme/voice pack* (JSON + CSS + images) — no code required.
+- **Your data, your pet** — the pet and every memory it collects belong to *you*, not to any company. No vendor's outage decides whether they survive.
+- **Portable by design** — export everything as a JSON backup, self-host the whole service, or migrate to another service hub and pick up where you left off. Even if AetherPet's official hub stops operating one day, your pet won't vanish with it: export your data, switch service hubs, and it's still alive.
+- **Open core, pluggable packs** — the event engine and the "presentation layer" (visual + copy) are fully decoupled. Anyone can reskin the pet by providing a *theme/voice pack* (JSON + CSS + images) — no code required. Capabilities like AI dialogue are opt-in pluggable extensions, not a reason to lock your memories into any cloud.
 - **Hermit mode by default** — each pet lives independently, never interacting with other pets. No social pressure, no interaction quotas.
-- **Data sovereignty** — your pet's memories and timeline belong to *you*. Export everything as JSON, migrate to another service hub later.
 - **Low-frequency by design** — the pet's proactive reach-out *backs off* the longer you're away (1 day → 3 days → 7 days → 30 days, like a thoughtful friend). Come back whenever; it waited.
 
 ## Current status
@@ -88,6 +92,7 @@ Use in code: `import { createLogger } from "@/lib/logger"; const l = createLogge
 | [`docs/database-schema.md`](docs/database-schema.md) | MySQL DDL & index design |
 | [`docs/dev-stage-plan.md`](docs/dev-stage-plan.md) | 6-stage development plan & verification matrix |
 | [`docs/asset-prompts.md`](docs/asset-prompts.md) | Image prompts for the hand-drawn asset pack (JIMENG) |
+| [`docs/why-self-hosted.md`](docs/why-self-hosted.md) | Why "your data, portable" — a plain-language essay for non-developers |
 
 ## Contributing
 
