@@ -213,7 +213,9 @@ export default function LoginPage() {
       </div>
 
       {/* pre-launch：退出登录后的首会话收尾句 */}
-      <FarewellToast />
+      <Suspense fallback={null}>
+        <FarewellToast />
+      </Suspense>
 
       {/* 节流弹窗：固定遮罩，展示剩余等待时间；倒计时结束自动消失 */}
       {throttleMsg && cooldown > 0 && (

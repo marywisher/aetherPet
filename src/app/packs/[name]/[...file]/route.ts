@@ -1,6 +1,6 @@
 /**
  * 文件名称：route.ts
- * 功能描述：GET /packs/[name]/[file] — 提供素材包静态文件
+ * 功能描述：GET /packs/[name]/[...file] — 提供素材包静态文件（多级路径）
  * 所属模块：app/packs
  * 验收对齐：docs/dev-stage-plan.md §3 阶段 1 演示步骤 4
  *
@@ -9,6 +9,12 @@
  *   - 原实现只有 /api/packs，没有 /packs/* 路由，CSS 一直 404
  *   - 此 route 通过 readPackFile 按 category 读取文件并返回对应 MIME
  *   - 路径遍历防护沿用 loader 内的双保险（fileName 含 .. 或绝对路径直接拒绝）
+ *
+ * pre-launch 修复（首页图片 404）：
+ *   - 原 [file] 为单段动态段，只匹配 /packs/default/theme.css；
+ *     manifest.assets 是 images/pet-out.png 这类多级相对路径，
+ *     /packs/default/images/pet-out.png 无法匹配 → 首页背景/pet 状态图不显示。
+ *   - 改为 catch-all [...file]（file: string[]），兼容单段（theme.css）与多级（images/xxx.png）。
  *
  * Edge 一致性修复：
  *   - 本 route 经 loader 间接使用 fs / path（Node API），显式声明 nodejs runtime，
@@ -23,7 +29,7 @@ import { readPackFile } from "@/domain/packs/loader";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type RouteContext = { params: Promise<{ name: string; file: string }> };
+type RouteContext = { params: Promise<{ name: string; file: string[] }> };
 
 function inferCategory(fileName: string): "theme" | "image" | "text" | "audio" {
   const ext = fileName.split(".").pop()?.toLowerCase() ?? "";
@@ -52,18 +58,20 @@ export async function GET(
   _req: NextRequest,
   ctx: RouteContext
 ): Promise<NextResponse> {
-  const { name, file } = await ctx.params;
+  const { name, file: fileSegments } = await ctx.params;
 
-  if (!name || !file) {
+  if (!name || !fileSegments || fileSegments.length === 0) {
     return NextResponse.json({ error: "参数缺失" }, { status: 400 });
   }
+  // catch-all：file 为 string[]（单段 ["theme.css"] / 多级 ["images", "pet-out.png"]）
+  const file = fileSegments.join("/");
   // 二次路径遍历校验（loader 内也有一次）
   // P3-006（Round 2）：不再直接判断 file.includes("..")（会误伤 foo..css 等合法文件名），
   // 改为：拆分段后判断任一段 === ".." 或 "."，且不允许以 / 开头。
   if (file.startsWith("/") || path.isAbsolute(file)) {
     return NextResponse.json({ error: "非法路径" }, { status: 400 });
   }
-  const segments = file.split(/[\\/]/);
+  const segments = fileSegments;
   if (segments.some((seg) => seg === ".." || seg === ".")) {
     return NextResponse.json({ error: "非法路径" }, { status: 400 });
   }

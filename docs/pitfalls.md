@@ -687,3 +687,46 @@ admin 发布走单事务（公告 + 全 pet 事件一起落，失败整体回滚
 **标签**：`技术`
 
 **状态**：`已闭环`
+---
+
+### [2026-09-15] 发布后：/packs/[name]/[file] 单段动态段无法匹配多级素材路径——首页背景/pet 状态图全部 404
+
+**阶段**：发布前增量 2 收尾（pre-launch 后手动验收发现）
+
+**问题描述**：
+首页背景（`images/home-morning.png`）、pet 状态图（`images/pet-out.png`）及 morning/night 包的 `images/home-bg.svg` 在页面全部不显示；theme.css 却正常。文件都存在，浏览器 404。
+
+**根因分析**：
+loader 给前端的 `webPath = /packs/{name}`，manifest.assets 值是**多级相对路径**（`images/xxx.png`），前端拼出 `GET /packs/default/images/pet-out.png`。但服务素材的 App Router 路由是 `src/app/packs/[name]/[file]/route.ts`——`[file]` 是**单段**动态段，只能匹配 `/packs/default/theme.css`（pack 根下的一级文件）。`images/pet-out.png` 有两段，路由无法匹配 → 404。增量 2 只做单测没做真机页面验证，验收绿、产品断线。
+
+**修复方案**：
+路由改为 catch-all：`src/app/packs/[name]/[...file]/route.ts`，`file: string[]`，`join("/")` 后走原有 `readPackFile`（其内部路径遍历防护不变）；`tests/unit/app/packs-route.test.ts` 同步改为数组形态并补多级路径断言。真机 curl 验证 6 个 URL 全部 200 + 正确 MIME。
+
+**预防措施**：
+凡素材/文件服务类路由，manifest 里写什么层级的相对路径，路由就必须能匹配该层级（catch-all 优先于固定段数）；素材接线增量必须加一条**真实 URL curl 断言**（dev server + curl 检查状态码与 Content-Type），不能只靠单测。
+
+**标签**：`技术` / `验收`
+
+**状态**：`已闭环`
+
+---
+
+### [2026-09-15] 发布后：/login 用 useSearchParams 未包 Suspense——next build 预渲染直接失败
+
+**阶段**：发布前增量 2 收尾（登录页 farewell toast 改造引入）
+
+**问题描述**：
+`npm run build` 报 `useSearchParams() should be wrapped in a suspense boundary at page "/login"`，prerender /login 失败、build 中断。dev 模式无感，只有生产 build 才暴露。
+
+**根因分析**：
+Next.js App Router 预渲染含 `useSearchParams` 的页面时，若 hook 不在 `<Suspense>` 边界内会直接报错（CSR bailout 要求）。增量 2 在 LoginPage 里加 FarewellToast（读 `?farewell=1`）时，页面文件里 import 了 Suspense 却没包使用点；且增量验证只跑了 tsc/vitest，没跑 `next build`。
+
+**修复方案**：
+`<Suspense fallback={null}><FarewellToast /></Suspense>`；build 恢复 exit 0。
+
+**预防措施**：
+凡页面使用 `useSearchParams`/`usePathname` 等 CSR-only hook，使用处必须包 Suspense；每个增量收尾必须跑一次完整 `npm run build`（dev 绿 ≠ build 绿）。
+
+**标签**：`技术`
+
+**状态**：`已闭环`
