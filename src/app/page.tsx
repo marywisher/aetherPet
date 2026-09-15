@@ -237,7 +237,7 @@ function HomeInner() {
                 : "旅行中"}
           </p>
         </div>
-        <nav className="flex items-center gap-3">
+        <nav className="flex items-center flex-wrap gap-x-2 gap-y-1">
           <a href="/profile" className="text-xs underline" style={{ color: "var(--muted)" }}>
             档案
           </a>
@@ -276,7 +276,7 @@ function HomeInner() {
             <img
               src={petImageUrl}
               alt={petName ?? ""}
-              className="w-40 h-40 object-contain drop-shadow"
+              className="w-32 h-32 sm:w-40 sm:h-40 object-contain drop-shadow"
             />
           ) : (
             <div
