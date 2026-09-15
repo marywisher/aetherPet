@@ -21,6 +21,8 @@ export interface LetterViewProps {
   };
   petName: string;
   rendered: RenderedText;
+  /** 信纸背景图 URL（来自素材包 letter_bg） */
+  bgUrl?: string | null;
 }
 
 function escapeRegExp(s: string): string {
@@ -66,7 +68,7 @@ const TYPE_LABELS: Record<string, string> = {
 /**
  * 单封信的信纸展示。
  */
-export function LetterView({ event, petName, rendered }: LetterViewProps) {
+export function LetterView({ event, petName, rendered, bgUrl }: LetterViewProps) {
   const d = new Date(event.ts);
   const dateStr = d.toLocaleDateString("zh-CN", {
     year: "numeric",
@@ -82,7 +84,7 @@ export function LetterView({ event, petName, rendered }: LetterViewProps) {
 
   return (
     <article
-      className="rounded-lg p-6 space-y-4"
+      className="rounded-lg p-6 space-y-4 relative overflow-hidden"
       style={{
         background: "var(--pack-paper)",
         color: "var(--pack-ink)",
@@ -91,6 +93,16 @@ export function LetterView({ event, petName, rendered }: LetterViewProps) {
         boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
       }}
     >
+      {bgUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={bgUrl}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover pointer-events-none select-none"
+          style={{ opacity: 0.15 }}
+        />
+      )}
+      <div className="relative space-y-4">
       <header
         className="flex items-center justify-between text-xs"
         style={{ color: "var(--muted)" }}
@@ -165,6 +177,7 @@ export function LetterView({ event, petName, rendered }: LetterViewProps) {
       <p className="text-xs italic" style={{ color: "var(--muted)" }}>
         — 来自 {petName}
       </p>
+      </div>
     </article>
   );
 }

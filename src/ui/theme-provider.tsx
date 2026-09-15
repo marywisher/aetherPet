@@ -27,6 +27,10 @@ interface ThemeContextValue {
     border?: string;
   } | null;
   webPath: string | null;
+  /** 当前包 assets 键映射（asset key → 相对路径，如 "pet_at_home" → "images/pet-home.png"） */
+  assets: Record<string, string>;
+  /** 当前包 guidance 文案（desk_hint / first_session_farewell） */
+  guidance: { desk_hint?: string; first_session_farewell?: string } | null;
   availablePacks: { name: string; displayName: string }[];
   loading: boolean;
   error: string | null;
@@ -37,6 +41,8 @@ const ThemeContext = createContext<ThemeContextValue>({
   packDisplayName: null,
   palette: null,
   webPath: null,
+  assets: {},
+  guidance: null,
   availablePacks: [],
   loading: true,
   error: null,
@@ -48,6 +54,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     packDisplayName: null,
     palette: null,
     webPath: null,
+    assets: {},
+    guidance: null,
     availablePacks: [],
     loading: true,
     error: null,
@@ -100,6 +108,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
               border: palette.border,
             },
             webPath: current.webPath,
+            assets: current.assets ?? {},
+            guidance: current.guidance ?? null,
             availablePacks: data.available ?? [],
             loading: false,
             error: null,

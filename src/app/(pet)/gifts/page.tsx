@@ -45,7 +45,7 @@ interface OfferResponse {
 
 function GiftsInner() {
   const router = useRouter();
-  const { packDisplayName, packName } = useTheme();
+  const { packDisplayName, packName, guidance } = useTheme();
 
   const [data, setData] = useState<InventoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -209,6 +209,7 @@ function GiftsInner() {
         onOffer={handleOffer}
         offerLoading={offerLoading}
         offerMessage={offerMessage}
+        deskHint={guidance?.desk_hint}
       />
 
       {/* 储物罐（已送出） */}

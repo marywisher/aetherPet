@@ -21,6 +21,8 @@ export interface EventCardProps {
   };
   petName: string;
   rendered: RenderedText;
+  /** 可选插图 URL（pre-launch：初见字条 first_meeting_note 等） */
+  imageUrl?: string | null;
 }
 
 const TYPE_LABELS: Record<string, string> = {
@@ -35,6 +37,7 @@ const TYPE_LABELS: Record<string, string> = {
   system_announce: "公告",
   daily_grant: "馈赠",
   offer_received: "送赠",
+  first_meeting: "初见",
 };
 
 const STATE_LABELS: Record<string, string> = {
@@ -75,7 +78,7 @@ function highlight(text: string, tokens: { value: string }[]): React.ReactNode {
   );
 }
 
-export function EventCard({ event, petName, rendered }: EventCardProps) {
+export function EventCard({ event, petName, rendered, imageUrl }: EventCardProps) {
   const typeLabel = TYPE_LABELS[event.type] ?? event.type;
   const stateLabel = STATE_LABELS[event.fsmState] ?? event.fsmState;
   const d = new Date(event.ts);
@@ -115,6 +118,14 @@ export function EventCard({ event, petName, rendered }: EventCardProps) {
         >
           {highlight(rendered.title, rendered.highlightTokens)}
         </h3>
+      )}
+      {imageUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={imageUrl}
+          alt=""
+          className="max-h-40 object-contain mx-auto rounded"
+        />
       )}
       <p className="text-sm leading-relaxed" style={{ fontFamily: "KaiTi, STKaiti, serif" }}>
         {highlight(rendered.body, rendered.highlightTokens)}

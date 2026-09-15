@@ -33,6 +33,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const result = getEffectivePack(requested, env.DEFAULT_PACK, packs);
 
   const current = result.effectivePack;
+  // pre-launch：暴露当前包的 assets 键映射与 guidance 文案（前端接线 pet 图/背景/引导用）
+  const assets = current?.manifest?.assets ?? {};
+  const guidance = (current?.texts?.["guidance"] ?? null) as
+    | { desk_hint?: string; first_session_farewell?: string }
+    | null;
   return NextResponse.json({
     ok: true,
     current: current && current.manifest
@@ -42,6 +47,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
           schemaVersion: current.manifest.schema_version,
           theme: current.manifest.theme,
           webPath: current.webPath,
+          assets,
+          guidance,
         }
       : null,
     fallbackReason: result.fallbackReason,

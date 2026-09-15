@@ -51,17 +51,15 @@ describe("loader（加载官方默认素材包）", () => {
     const result = await readPackFile("default", "image", "home_bg");
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data.contentType).toBe("image/svg+xml");
-      expect(result.data.content.toString()).toContain("<svg");
+      expect(result.data.contentType).toBe("image/png");
     }
   });
 
   it("readPackFile 能读取图片（通过文件名）", async () => {
-    const result = await readPackFile("default", "image", "home-bg.svg");
+    const result = await readPackFile("default", "image", "home-morning.png");
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.data.contentType).toBe("image/svg+xml");
-      expect(result.data.content.toString()).toContain("<svg");
+      expect(result.data.contentType).toBe("image/png");
     }
   });
 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { APP_NAME_DEFAULT } from "@/config/client-brand";
+import { useTheme } from "@/ui/theme-provider";
+import { fillFarewell, takeFarewellPetName } from "@/lib/farewell";
 
 /**
  * 文件名称：login/page.tsx
@@ -210,6 +212,9 @@ export default function LoginPage() {
         </footer>
       </div>
 
+      {/* pre-launch：退出登录后的首会话收尾句 */}
+      <FarewellToast />
+
       {/* 节流弹窗：固定遮罩，展示剩余等待时间；倒计时结束自动消失 */}
       {throttleMsg && cooldown > 0 && (
         <div
@@ -246,5 +251,37 @@ export default function LoginPage() {
         </div>
       )}
     </main>
+  );
+}
+
+/**
+ * pre-launch：首会话收尾句（退出登录后落地页展示）。
+ * 读取 ?farewell=1 查询参数 + localStorage 暂存的 pet name，展示一次后即消费（取即清）。
+ */
+function FarewellToast() {
+  const searchParams = useSearchParams();
+  const { guidance } = useTheme();
+  const [petName, setPetName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (searchParams?.get("farewell") === "1") {
+      setPetName(takeFarewellPetName());
+    }
+  }, [searchParams]);
+
+  if (!petName || !guidance?.first_session_farewell) return null;
+
+  return (
+    <div
+      className="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-sm px-6"
+      style={{ zIndex: 40 }}
+    >
+      <p
+        className="paper rounded-lg px-4 py-3 text-center text-sm"
+        style={{ color: "var(--ink)" }}
+      >
+        {fillFarewell(guidance.first_session_farewell, petName)}
+      </p>
+    </div>
   );
 }

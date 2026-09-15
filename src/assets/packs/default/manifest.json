@@ -19,9 +19,12 @@
     }
   },
   "assets": {
-    "home_bg": "images/home-bg.svg",
-    "letter_bg": "images/letter-bg.svg",
-    "first_meeting_note": "images/first-meeting-note.png"
+    "home_bg": "images/home-morning.png",
+    "letter_bg": "images/letter-1.png",
+    "first_meeting_note": "images/first-meeting-note.png",
+    "pet_at_home": "images/pet-home.png",
+    "pet_out_walking": "images/pet-out.png",
+    "pet_on_trip": "images/pet-travel.png"
   },
   "texts": {
     "outing": "text/outing.json",

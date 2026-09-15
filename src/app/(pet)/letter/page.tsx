@@ -41,7 +41,7 @@ interface LettersResponse {
 
 function LettersInner() {
   const router = useRouter();
-  const { packDisplayName, packName } = useTheme();
+  const { packDisplayName, packName, webPath, assets } = useTheme();
 
   const [data, setData] = useState<LettersResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -206,6 +206,11 @@ function LettersInner() {
               event={it.event}
               petName={petName}
               rendered={it.rendered}
+              bgUrl={
+                webPath && assets["letter_bg"]
+                  ? `${webPath}/${assets["letter_bg"]}`
+                  : null
+              }
             />
           ))}
         </section>

@@ -1,5 +1,10 @@
 "use client";
 import { APP_BRAND_KEY_CLIENT } from "@/config/client-brand";
+import {
+  hasShownFarewell,
+  markFarewellShown,
+  stashFarewellPetName,
+} from "@/lib/farewell";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -22,6 +27,8 @@ export default function SettingsPage() {
   const [emailHash, setEmailHash] = useState<string>("");
   const [lastBackupHash, setLastBackupHash] = useState<string>("");
   const [packName, setPackName] = useState<string>("");
+  const [petName, setPetName] = useState<string | null>(null);
+  const [petId, setPetId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // 退出登录状态（P1-001 修复：提供 UI 入口，对齐 runbook §1 第 4 步）
@@ -42,6 +49,8 @@ export default function SettingsPage() {
         setEmailHash(data.emailHash ?? "");
         setLastBackupHash(data.lastBackupHash ?? "");
         setPackName(data.pet?.activePackName ?? "default");
+        setPetName(data.pet?.name ?? null);
+        setPetId(data.pet?.id ?? null);
       } catch (e) {
         if (alive) setError(e instanceof Error ? e.message : "加载失败");
       } finally {
@@ -141,13 +150,18 @@ export default function SettingsPage() {
                 disabled={loggingOut}
                 onClick={async () => {
                   setLoggingOut(true);
+                  // pre-launch：退出登录前存储 pet name 供 /login 收尾句落点
+                  if (petId && !hasShownFarewell(petId) && petName) {
+                    stashFarewellPetName(petName);
+                    markFarewellShown(petId);
+                  }
                   try {
                     await fetch("/api/auth/logout", { method: "POST" });
                   } catch {
                     // 即使 API 失败也强制清 cookie 并跳转
                     document.cookie = `${APP_BRAND_KEY_CLIENT}_token=; Max-Age=0; Path=/`;
                   } finally {
-                    router.replace("/login");
+                    router.replace("/login?farewell=1");
                   }
                 }}
                 className="px-3 py-1.5 rounded-full text-sm border"

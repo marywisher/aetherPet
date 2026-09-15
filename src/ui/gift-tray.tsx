@@ -26,6 +26,8 @@ export interface GiftTrayProps {
   offerDisabled?: boolean;
   offerLoading?: boolean;
   offerMessage?: string | null;
+  /** 素材包 guidance.desk_hint（pre-launch：空态引导） */
+  deskHint?: string | null;
 }
 
 /**
@@ -41,6 +43,7 @@ export function GiftTray({
   offerDisabled = false,
   offerLoading = false,
   offerMessage = null,
+  deskHint = null,
 }: GiftTrayProps) {
   const showTable = unoffered.length > 0;
 
@@ -94,7 +97,7 @@ export function GiftTray({
           </div>
         </section>
       ) : (
-        <EmptyState petName={petName} storageCount={storageCount} />
+        <EmptyState petName={petName} storageCount={storageCount} deskHint={deskHint} />
       )}
     </div>
   );
@@ -177,9 +180,11 @@ function InventoryCard({
 function EmptyState({
   petName,
   storageCount,
+  deskHint,
 }: {
   petName: string;
   storageCount: number;
+  deskHint?: string | null;
 }) {
   return (
     <section
@@ -192,11 +197,19 @@ function EmptyState({
       <div aria-hidden className="text-3xl" style={{ color: "var(--pack-primary)" }}>
         ˚ ࡇ ˚
       </div>
+      {deskHint && (
+        <p
+          className="text-sm leading-relaxed"
+          style={{ color: "var(--pack-ink)" }}
+        >
+          {deskHint}
+        </p>
+      )}
       <p
         className="text-sm leading-relaxed"
-        style={{ color: "var(--pack-ink)" }}
+        style={{ color: "var(--muted)" }}
       >
-        桌上空空如也。每天第一次登录时，系统会从物品池里送你一件小东西——
+        每天第一次登录时，系统会从物品池里送你一件小东西——
         不用赶，错过也不惩罚。
       </p>
       <p className="text-xs" style={{ color: "var(--muted)" }}>

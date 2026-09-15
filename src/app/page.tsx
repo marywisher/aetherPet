@@ -15,6 +15,11 @@ import { EventCard } from "@/ui/event-card";
 import { TimelineEntryCard } from "@/ui/timeline";
 import { runSyncOnce } from "@/lib/sync-client";
 import { splitEventsByTs } from "@/lib/timeline-split";
+import {
+  fillFarewell,
+  hasShownFarewell,
+  markFarewellShown,
+} from "@/lib/farewell";
 import type { EventTypeValue, PetState } from "@/domain/types";
 import type { RenderedText } from "@/domain/events/render";
 
@@ -58,6 +63,7 @@ function HomeInner() {
   const router = useRouter();
   const [checking, setChecking] = useState(true);
   const [petName, setPetName] = useState<string | null>(null);
+  const [petId, setPetId] = useState<string | null>(null);
   const [petState, setPetState] = useState<PetState>("at_home");
   const [events, setEvents] = useState<TimelineItem[]>([]);
   const [generating, setGenerating] = useState(false);
@@ -76,7 +82,42 @@ function HomeInner() {
   >(null);
   // 本次离线窗口起点（sync.catchup.offlineStartTs）：用于“你不在的时候”新旧分隔
   const [offlineStartTs, setOfflineStartTs] = useState<number | null>(null);
-  const { packDisplayName, packName } = useTheme();
+  const { packDisplayName, packName, assets, webPath, guidance } = useTheme();
+
+  // 初见前的初次展示：收尾句仅本会话展示一次（localStorage 按 petId 标记）
+  const [showFarewell, setShowFarewell] = useState(false);
+  useEffect(() => {
+    if (petId && guidance?.first_session_farewell) {
+      setShowFarewell(!hasShownFarewell(petId));
+    }
+  }, [petId, guidance]);
+
+  // 页面卸载（直接关标签/跳外部）→ 标记收尾句已展示（避免下次重复）；
+  // 客户端路由跳转不触发 pagehide，logout 路径保持未标记，由 /login 落点消费。
+  useEffect(() => {
+    if (!petId) return;
+    const onHide = () => {
+      if (!hasShownFarewell(petId)) markFarewellShown(petId);
+    };
+    window.addEventListener("pagehide", onHide);
+    return () => window.removeEventListener("pagehide", onHide);
+  }, [petId]);
+
+  // 按 pet 状态选状态图（asset key → 相对路径）
+  const petImageKey =
+    petState === "at_home"
+      ? "pet_at_home"
+      : petState === "out_walking"
+        ? "pet_out_walking"
+        : "pet_on_trip";
+  const petImageUrl =
+    webPath && assets[petImageKey] ? `${webPath}/${assets[petImageKey]}` : null;
+  const homeBgUrl =
+    webPath && assets["home_bg"] ? `${webPath}/${assets["home_bg"]}` : null;
+  const firstMeetingNoteUrl =
+    webPath && assets["first_meeting_note"]
+      ? `${webPath}/${assets["first_meeting_note"]}`
+      : null;
 
   // 新旧分组：ts >= 离线起点 = “你不在的时候发生的”，其余为更早的老事件
   const { fresh, past } = useMemo(
@@ -113,6 +154,7 @@ function HomeInner() {
         return;
       }
       setPetName(data.pet.name);
+      setPetId(data.pet.id);
       setPetState(data.pet.state);
       setEvents(data.events);
       // 渐进披露入口卡片：若存在聚合摘要事件，展示"过去 X 天"入口
@@ -211,6 +253,47 @@ function HomeInner() {
         </nav>
       </header>
 
+      {/* 主场景区（pre-launch：首页背景 + 按状态切换的小刺猬） */}
+      <section
+        className="relative rounded-2xl overflow-hidden"
+        style={{
+          border: "1px solid var(--pack-border)",
+          background: "var(--pack-paper)",
+        }}
+      >
+        {homeBgUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={homeBgUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+            style={{ opacity: 0.55 }}
+          />
+        )}
+        <div className="relative flex flex-col items-center py-6">
+          {petImageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={petImageUrl}
+              alt={petName ?? ""}
+              className="w-40 h-40 object-contain drop-shadow"
+            />
+          ) : (
+            <div
+              className="w-32 h-32 rounded-full"
+              style={{ background: "var(--pack-primary)", opacity: 0.3 }}
+            />
+          )}
+          <p className="text-xs mt-2" style={{ color: "var(--muted)" }}>
+            {petState === "at_home"
+              ? "在家"
+              : petState === "out_walking"
+                ? "出门中"
+                : "旅行中"}
+          </p>
+        </div>
+      </section>
+
       {/* 今日馈赠欢迎卡片（阶段 6 收官：馈赠仪式感；sync 自动发放，仅当日首次显示） */}
       {dailyWelcome && (
         <section
@@ -269,6 +352,7 @@ function HomeInner() {
                 event={it.event}
                 petName={petName ?? ""}
                 rendered={it.rendered}
+                imageUrl={it.event.type === "first_meeting" ? firstMeetingNoteUrl : null}
               />
             ))}
             {fresh.length > 0 && past.length > 0 && (
@@ -283,6 +367,7 @@ function HomeInner() {
                 event={it.event}
                 petName={petName ?? ""}
                 rendered={it.rendered}
+                imageUrl={it.event.type === "first_meeting" ? firstMeetingNoteUrl : null}
               />
             ))}
           </>
@@ -295,6 +380,22 @@ function HomeInner() {
           查看全部时间线 →
         </a>
       </section>
+
+      {/* 桌面小字（pre-launch：placeholder 语义——无馈赠卡/无内容时显示，引导送礼） */}
+      {!dailyWelcome && guidance?.desk_hint && (
+        <p className="text-center text-xs" style={{ color: "var(--muted)" }}>
+          {guidance.desk_hint}
+        </p>
+      )}
+
+      {/* 首会话收尾句（pre-launch：双落点之一，仅首次会话展示） */}
+      {showFarewell && guidance?.first_session_farewell && (
+        <footer className="text-center pt-4">
+          <p className="text-xs" style={{ color: "var(--muted)" }}>
+            {fillFarewell(guidance.first_session_farewell, petName ?? "")}
+          </p>
+        </footer>
+      )}
 
       {/* 开发工具区（仅非生产构建可见：本地 dev / 测试；生产隐藏，避免 403 死按钮） */}
       {IS_DEV && (
