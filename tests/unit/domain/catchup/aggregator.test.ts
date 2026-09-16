@@ -267,7 +267,7 @@ describe("domain/catchup/aggregator.ts generateAggregateSummaryEvent", () => {
     expect(event.hubId).toBe("custom-hub");
   });
 
-  it("engineVersion / schemaVersion 为 1.0.0，packSchemaVersion 为 1.1.0（pre-launch 契约升级）", () => {
+  it("engineVersion / schemaVersion 为 1.0.0，packSchemaVersion 为 1.2.0（季节修饰件契约升级）", () => {
     const { event } = generateAggregateSummaryEvent({
       pet: makePet(),
       memories: MEMORIES,
@@ -275,7 +275,7 @@ describe("domain/catchup/aggregator.ts generateAggregateSummaryEvent", () => {
       rng: seededRng(42),
     });
     expect(event.engineVersion).toBe("1.0.0");
-    expect(event.packSchemaVersion).toBe("1.1.0");
+    expect(event.packSchemaVersion).toBe("1.2.0");
     expect(event.schemaVersion).toBe("1.0.0");
   });
 

@@ -30,6 +30,7 @@ import {
 } from "@/domain/persistence/repos/events.repo";
 import { renderEvent, type TextSlotTemplate } from "@/domain/events/render";
 import { loadPackByName } from "@/domain/packs/loader";
+import { seasonToneFor, type SeasonModifiers } from "@/domain/events/season";
 import { getPool } from "@/domain/persistence/db";
 import { queryOne } from "@/domain/persistence/sql";
 import { buildAnnouncePlaceholderMap, withAnnouncePlaceholders } from "@/lib/render-announce";
@@ -76,6 +77,8 @@ export async function GET(req: Request): Promise<NextResponse> {
   // 4) 拉取本页事件
   const events = await findEvents(pet.id, limit, offset);
   const pack = await loadPackByName(pet.activePackName ?? "default");
+  // 季节修饰件（pack_schema 1.2.0）：确定性采样，旧包无键时 seasonTone=null
+  const seasonMods = pack?.texts["season_modifiers"] as SeasonModifiers | undefined;
 
   // 4.1) 阶段 6（P2-001）：system_announce 事件渲染前反查公告（params 只存 id）
   const announcePlaceholders = await buildAnnouncePlaceholderMap(events);
@@ -87,7 +90,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         ? withAnnouncePlaceholders(e, announcePlaceholders.get(String(e.params.announcement_id ?? "")))
         : e;
     const rendered = renderEvent(eForRender, packText ?? null, pet.name);
-    return { event: e, rendered };
+    return { event: e, rendered: { ...rendered, seasonTone: seasonToneFor(e, seasonMods) } };
   });
 
   // 5) 总条数（可选；开启时多一次 COUNT 查询）
@@ -115,7 +118,10 @@ export async function GET(req: Request): Promise<NextResponse> {
         : latestAggregateEvent;
     latestAggregate = {
       event: latestAggregateEvent,
-      rendered: renderEvent(aggForRender, packText ?? null, pet.name),
+      rendered: {
+        ...renderEvent(aggForRender, packText ?? null, pet.name),
+        seasonTone: seasonToneFor(latestAggregateEvent, seasonMods),
+      },
     };
   }
 

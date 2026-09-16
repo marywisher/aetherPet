@@ -36,6 +36,7 @@ import { grantDailyItem } from "@/domain/gift/daily-grant";
 import { checkAndGenerateReply } from "@/domain/gift/reply";
 import { renderEvent, type TextSlotTemplate } from "@/domain/events/render";
 import { loadPackByName } from "@/domain/packs/loader";
+import { seasonToneFor, type SeasonModifiers } from "@/domain/events/season";
 import { buildAnnouncePlaceholderMap, withAnnouncePlaceholders } from "@/lib/render-announce";
 
 /**
@@ -135,6 +136,8 @@ export async function GET(req: Request): Promise<NextResponse> {
   // 5) 时间线（渲染后返回，前端直接使用）
   const recentEvents = await findEventsByPetId(pet.id, 20);
   const pack = await loadPackByName(pet.activePackName ?? "default");
+  // 季节修饰件（pack_schema 1.2.0）：确定性采样，旧包无键时 seasonTone=null
+  const seasonMods = pack?.texts["season_modifiers"] as SeasonModifiers | undefined;
   // 阶段 6（P2-001）：system_announce 渲染前反查公告
   const announcePlaceholders = await buildAnnouncePlaceholderMap(recentEvents);
   const renderedEvents = recentEvents.map((e) => {
@@ -144,7 +147,7 @@ export async function GET(req: Request): Promise<NextResponse> {
         ? withAnnouncePlaceholders(e, announcePlaceholders.get(String(e.params.announcement_id ?? "")))
         : e;
     const rendered = renderEvent(eForRender, packText ?? null, pet.name);
-    return { event: e, rendered };
+    return { event: e, rendered: { ...rendered, seasonTone: seasonToneFor(e, seasonMods) } };
   });
 
   // 6) 渐进披露入口卡片：最新的聚合摘要事件
@@ -161,7 +164,10 @@ export async function GET(req: Request): Promise<NextResponse> {
         : latestAggregate;
     latestAggregateRendered = {
       event: latestAggregate,
-      rendered: renderEvent(aggForRender, packText ?? null, pet.name),
+      rendered: {
+        ...renderEvent(aggForRender, packText ?? null, pet.name),
+        seasonTone: seasonToneFor(latestAggregate, seasonMods),
+      },
     };
   }
 

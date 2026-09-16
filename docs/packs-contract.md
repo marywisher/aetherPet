@@ -1,12 +1,12 @@
 # AetherPet 素材包契约（Pack Contract）
 
-> 版本：**v1.1.0**（pre-launch 增量 1 — pack_schema 兼容扩展）  
+> 版本：**v1.2.0**（季节修饰件 — pack_schema 兼容扩展）  
 > 冻结时间：阶段 2（2024-06）；§5/§6/§8.4 同步于 2026-09-15  
 > 适用范围：AetherPet 素材包（`src/assets/packs/<name>/`）  
 > 演进规则见 §8
-> 本版本变更：新增 `first_meeting` 事件类型（第 12 类）+ `guidance` 文案组；
-> §5 事件表加 `first_meeting` 行；§6 补字段级回退优先级；§8.4 清单补 RANDOM_TYPES 排除；
-> §10 变更历史记录
+> 本版本变更：新增可选文案组 `season_modifiers`（季节修饰件，复合生成：事件+目的地+季节件）；
+> §1 目录布局 + §6.6 季节修饰件；§10 变更历史
+> 上一版本 v1.1.0：新增 `first_meeting` 事件类型（第 12 类）+ `guidance` 文案组
 
 ---
 
@@ -29,7 +29,8 @@ src/assets/packs/<name>/
     ├── daily-grant.json
     ├── offer-received.json
     ├── first-meeting.json    # 可选（pack_schema 1.1.0）
-    └── guidance.json         # 可选（pack_schema 1.1.0）
+    ├── guidance.json         # 可选（pack_schema 1.1.0）
+    └── season-modifiers.json # 可选（pack_schema 1.2.0）：季节修饰件，4 季 × 10~15 条短标记
 ```
 
 MVP 阶段不引入 `fonts/` / `icons/` / `particles/` 等目录（阶段 5 才开放）。
@@ -105,6 +106,8 @@ MVP 阶段不引入 `fonts/` / `icons/` / `particles/` 等目录（阶段 5 才�
 | `theme.palette.*` | string | ✅ | 5 个颜色字段全必填 |
 | `assets` | object | 默认 `{}` | 键任意，值必须为相对路径 |
 | `texts.{11 事件类型}` | string | ✅ | 11 个事件类型的相对路径，缺一即校验失败 |
+| `texts.first_meeting` / `texts.guidance` | string | 可选（1.1.0+） | 缺则 loader 物化回退 default 包同名键 |
+| `texts.season_modifiers` | string | 可选（1.2.0+） | 季节修饰件（§6.6）；缺则 loader 物化回退，旧包零改动可用 |
 | `fallback` | string \| null | 默认 `null` | MVP 恒 null |
 
 其他未知字段：`passthrough()` 允许，loader 会保留但不消费（便于包作者加自定义元数据）。
@@ -246,6 +249,32 @@ pack_schema 1.1.0 新增的可选键（`texts.first_meeting` / `texts.guidance` 
 > 不产生混合观感。
 > 1.1.0 新增键维持「字段级回退不扩散」的原则：不会影响既有渲染逻辑。
 
+### 6.6 季节修饰件（pack_schema 1.2.0）
+
+**复合生成原则**：事件文案池不动，季节修饰件作为**独立一行**拼在卡片/明信片正文之后。
+文案工作量 = 4 季 × 10~15 条 = 40~60 条短标记（非 160+ 条全组合）；用户记住的是「秋天了」，
+不是第 N 条随机句。**维度优先级：季节 >> 时段**——季节是长线内容节奏骨架，时段辨识度低，
+留在文案细节里，不升维成随机参数。
+
+**文件结构**（`text/season-modifiers.json`）：
+
+```json
+{ "spring": [10~15 条], "summer": [10~15 条], "autumn": [10~15 条], "winter": [10~15 条] }
+```
+
+**规则**：
+
+1. **季节判定用事件 ts（非当前时间）**：UTC+8 月份 3–5 春 / 6–8 夏 / 9–11 秋 / 12–2 冬；
+   补算回溯数月的事件也能拿到正确季节（`seasonOfTs`）
+2. **确定性采样**：`seasonToneFor(event, mods)` 由 `hash(event.id) % 该季数组长度` 取行——
+   不消费 rng，补算回溯/重渲染/导出再渲染都稳定不漂移
+3. **排除类型**：`system_announce` / `aggregate_summary` 不挂季节件（系统/汇总无语义）；
+   其余事件（含信件类，统一视觉语法）都挂
+4. **降级**：包无 `season_modifiers` 键（物化后仍缺）或该季数组为空 → `seasonTone = null`，UI 不显示
+5. **接线点**：路由层（/api/pet/timeline、/api/sync、/api/letters、/api/pet/generate-event）将
+   `seasonTone` 附加进 `rendered` 对象（`RenderedText.seasonTone?` 可选字段，加性扩展）；
+   `renderEvent` 核心签名不变（引擎-素材解耦原则不破）
+
 ---
 
 ## 7. 元数据（memory_refs）与文案的对应关系
@@ -324,6 +353,13 @@ pack_schema 1.1.0 新增的可选键（`texts.first_meeting` / `texts.guidance` 
 
 ## 10. 变更历史
 
+- **v1.2.0（季节修饰件 — 2026-09-15）**：
+  - 新增可选文案组 `texts.season_modifiers`（4 季 × 10~15 条高辨识度短标记）
+  - §6.6 季节修饰件：复合生成（事件+目的地+季节件）、ts 判定季节、hash(event.id) 确定性采样、
+    system_announce/aggregate_summary 排除、UI 独立一行小字（与明信片同一视觉语法）
+  - 维度原则入文档：季节 >> 时段（时段不升维）
+  - loader 物化 `season_modifiers` 键（非 default 包缺键 → 拷 default 同名键）；
+    1.0.x / 1.1.0 旧包零改动可用；default 包 manifest bump 至 1.2.0
 - **v1.1.0（pre-launch 增量 1 — 2026-09-15）**：
   - 新增事件类型 `first_meeting`（第 12 类），source = `creation`，FSM no-op；不进 `RANDOM_TYPES` / 补算池 / dev `FORCE_TYPES`（§5 表 / §8.4 清单同步）
   - 新增可选文案组 `guidance`（`desk_hint` + `first_session_farewell`）

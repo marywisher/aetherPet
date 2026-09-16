@@ -140,6 +140,11 @@ export function EventCard({ event, petName, rendered, imageUrl }: EventCardProps
           （{petName} 的一封自主信）
         </p>
       )}
+      {rendered.seasonTone && (
+        <p className="text-xs" style={{ color: "var(--muted)", opacity: 0.85 }}>
+          {rendered.seasonTone}
+        </p>
+      )}
     </article>
   );
 }

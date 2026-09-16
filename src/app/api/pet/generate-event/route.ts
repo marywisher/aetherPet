@@ -34,6 +34,7 @@ import { newId } from "@/domain/util/ulid";
 import { generateNextEvent } from "@/domain/events";
 import { renderEvent, type TextSlotTemplate } from "@/domain/events/render";
 import { loadPackByName } from "@/domain/packs/loader";
+import { seasonToneFor, type SeasonModifiers } from "@/domain/events/season";
 
 /**
  * P2-011 修复 + P2-013 补全：生产环境保护判定。
@@ -126,7 +127,11 @@ export async function POST(req: Request): Promise<NextResponse> {
   // 渲染文本
   const pack = await loadPackByName(pet.activePackName ?? "default");
   const packText = pack?.texts[output.event.type] as TextSlotTemplate | undefined;
-  const rendered = renderEvent(output.event, packText ?? null, pet.name);
+  const rendered = {
+    ...renderEvent(output.event, packText ?? null, pet.name),
+    // 季节修饰件（pack_schema 1.2.0）
+    seasonTone: seasonToneFor(output.event, pack?.texts["season_modifiers"] as SeasonModifiers | undefined),
+  };
 
   return NextResponse.json({
     ok: true,

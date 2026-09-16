@@ -28,7 +28,7 @@ describe("loader（加载官方默认素材包）", () => {
     if (defaultPack) {
       expect(defaultPack.manifest).not.toBeNull();
       expect(defaultPack.manifest?.name).toBe("default");
-      expect(defaultPack.manifest?.pack_schema_version).toBe("1.1.0");
+      expect(defaultPack.manifest?.pack_schema_version).toBe("1.2.0");
       expect(defaultPack.themeCssContent).toMatch(/--pack-primary/);
       expect(defaultPack.images.home_bg).toBeDefined();
       expect(defaultPack.texts.outing).toBeDefined();
@@ -45,6 +45,22 @@ describe("loader（加载官方默认素材包）", () => {
   it("loadPackByName 找不到时返回 null", async () => {
     const pack = await loadPackByName("nonexistent-pack");
     expect(pack).toBeNull();
+  });
+
+  it("pack_schema 1.2.0：非 default 包缺 season_modifiers 时物化自 default", async () => {
+    const packs = await loadPacks(process.env.ASSET_PACKS_DIR || "./src/assets/packs");
+    const defaultPack = packs.find((p) => p.name === "default");
+    const morningPack = packs.find((p) => p.name === "morning");
+    // default 包有真实季节修饰件文件（4 季 × ≥10 条）
+    const mods = defaultPack?.texts["season_modifiers"] as Record<string, string[]> | undefined;
+    expect(mods).toBeDefined();
+    for (const s of ["spring", "summer", "autumn", "winter"] as const) {
+      expect(mods![s]).toBeDefined();
+      expect(mods![s].length).toBeGreaterThanOrEqual(10);
+      expect(mods![s].length).toBeLessThanOrEqual(15);
+    }
+    // morning 包未声明该键 → loader 物化：与 default 同源
+    expect(morningPack?.texts["season_modifiers"]).toBe(mods);
   });
 
   it("readPackFile 能读取图片（通过 asset key）", async () => {

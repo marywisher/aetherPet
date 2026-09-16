@@ -42,6 +42,11 @@ export interface RenderedText {
   highlightTokens: HighlightToken[];
   /** 抽到的档位（用于调试） */
   variantTier: "daily" | "poetic";
+  /**
+   * 季节修饰件（pack_schema 1.2.0，可选）：由路由层 seasonToneFor 确定性采样后附加，
+   * 独立于 body 文案（现有文案不动），旧素材包无此键时为 null。
+   */
+  seasonTone?: string | null;
 }
 
 function formatSpanDays(spanDays: number): string {

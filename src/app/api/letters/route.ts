@@ -22,6 +22,7 @@ import {
 } from "@/domain/persistence/repos/events.repo";
 import { renderEvent, type TextSlotTemplate } from "@/domain/events/render";
 import { loadPackByName } from "@/domain/packs/loader";
+import { seasonToneFor, type SeasonModifiers } from "@/domain/events/season";
 import { isReplyDue } from "@/domain/gift/reply";
 
 export async function GET(req: Request): Promise<NextResponse> {
@@ -54,11 +55,17 @@ export async function GET(req: Request): Promise<NextResponse> {
 
   const pack = await loadPackByName(pet.activePackName ?? "default");
 
+  const seasonMods = pack?.texts["season_modifiers"] as SeasonModifiers | undefined;
+
   const letters = allLetters.map((e) => {
     const packText = pack?.texts[e.type] as TextSlotTemplate | undefined;
     return {
       event: e,
-      rendered: renderEvent(e, packText ?? null, pet.name),
+      rendered: {
+        ...renderEvent(e, packText ?? null, pet.name),
+        // 季节修饰件（pack_schema 1.2.0）：确定性采样，旧包无键时自动为 null
+        seasonTone: seasonToneFor(e, seasonMods),
+      },
     };
   });
 

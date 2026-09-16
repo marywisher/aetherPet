@@ -130,7 +130,7 @@ describe("9 个随机事件生成器（契约验证）", () => {
       expect(event.memoryRefs).toBeDefined();
       expect(event.source).toMatch(/^(engine|gift)$/);
       expect(event.engineVersion).toBe("1.0.0");
-      expect(event.packSchemaVersion).toBe("1.1.0");
+      expect(event.packSchemaVersion).toBe("1.2.0");
       expect(event.schemaVersion).toBe("1.0.0");
       expect(event.hubId).toBe("local");
       expect(event.isAggregate).toBe(false);

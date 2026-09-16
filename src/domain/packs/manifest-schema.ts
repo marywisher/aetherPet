@@ -56,6 +56,8 @@ export const PackManifestSchema: z.ZodType<PackManifest> = z
         // pack_schema 1.1.0（pre-launch）：新增可选键，缺则渲染时回退 default 包
         first_meeting: z.string().min(1).optional(),
         guidance: z.string().min(1).optional(),
+        // pack_schema 1.2.0：季节修饰件（复合生成：事件+目的地+季节件），旧包零改动可用
+        season_modifiers: z.string().min(1).optional(),
       })
       .catchall(z.string()),
     fallback: z.string().nullable().default(null),

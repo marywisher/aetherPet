@@ -2,7 +2,7 @@
   "name": "default",
   "display_name": "官方默认（手绘暖调）",
   "version": "1.1.0",
-  "pack_schema_version": "1.1.0",
+  "pack_schema_version": "1.2.0",
   "min_engine_version": "1.0.0",
   "author": "AetherPet core team",
   "license": "MIT",
@@ -39,7 +39,8 @@
     "daily_grant": "text/daily-grant.json",
     "offer_received": "text/offer-received.json",
     "first_meeting": "text/first-meeting.json",
-    "guidance": "text/guidance.json"
+    "guidance": "text/guidance.json",
+    "season_modifiers": "text/season-modifiers.json"
   },
   "fallback": null
 }

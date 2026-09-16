@@ -149,6 +149,20 @@ export function LetterView({ event, petName, rendered, bgUrl }: LetterViewProps)
         </p>
       )}
 
+      {/* 季节修饰件（pack_schema 1.2.0）：与卡片同一视觉语法（同一小字样式） */}
+      {rendered.seasonTone && (
+        <p
+          className="text-xs"
+          style={{
+            color: "var(--muted)",
+            opacity: 0.85,
+            fontFamily: "KaiTi, STKaiti, serif",
+          }}
+        >
+          {rendered.seasonTone}
+        </p>
+      )}
+
       {rendered.highlightTokens.length > 0 && (
         <footer
           className="flex flex-wrap gap-1 pt-2"

@@ -173,7 +173,7 @@ export async function loadPacks(packsDir?: string): Promise<LoadedPack[]> {
   // 边界：仅物化这几个新增可选键；1.0.0 的 11 个必填键仍走整包级回退（fallback.ts），语义不扩散。
   const defaultPack = result.find((p) => p.name === "default") ?? null;
   if (defaultPack) {
-    const FIELD_KEYS = ["first_meeting", "guidance"] as const;
+    const FIELD_KEYS = ["first_meeting", "guidance", "season_modifiers"] as const;
     for (const pack of result) {
       if (pack.name === "default") continue;
       for (const key of FIELD_KEYS) {
